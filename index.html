@@ -1,0 +1,720 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="description" content="ISTG Metadatensuche" />
+
+<!--Start1:ab hier kopieren fuer Imperia -->
+<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+<link rel="stylesheet" href="js/bootstrap/css/bootstrap.css">
+<link rel="stylesheet" href="js/istg.css" type="text/css" />
+<link rel="stylesheet" href="http://data.uni-muenster.de/istg/js/leaflet4.4/leaflet.css" />
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+<link rel="stylesheet" href="http://data.uni-muenster.de/istg/js/leaflet4.4/markercluster/MarkerCluster.css" />
+<link rel="stylesheet" href="http://data.uni-muenster.de/istg/js/leaflet4.4/markercluster/MarkerCluster.Default.css" />
+<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+<script src="http://data.uni-muenster.de/istg/js/leaflet4.4/leaflet.js" type="text/javascript"></script>
+<script src="http://data.uni-muenster.de/istg/js/leaflet4.4/markercluster/leaflet.markercluster-src.js" type="text/javascript"></script>
+<script src="js/istg_new.js" type="text/javascript"></script>
+<!--Ende1:bis hier kopieren fuer Imperia -->
+
+<title>ISTG Metadatensuche</title>
+
+</head>
+
+<body>
+
+	<div id="dialog">
+	</div>
+
+        <div id="content">
+
+<!--Start2:ab hier kopieren fuer Imperia -->
+<div id="istg_main_wrapper" class="istg_main_wrapper">
+				<div style="float:left;width:500px;">
+					<h1 style="font-size:2.2em;color:#1a447b">ISTG Metadaten Suche</h1>
+					<br/><br/><div class="col-ls-6">
+						<div class="input-group input-group-lg">
+							<input id="searchbox" list="towns" type="text" class="form-control">
+							<span class="input-group-btn">
+								<button class="btn btn-default" type="button" onclick="javascript:search(null,null,true);">
+								<i id="ajaxloader" class="fa fa-spinner fa-spin"></i>
+								<span id="suche" class="show"><span class="glyphicon glyphicon-search"></span> Suchen</span>
+								</button>
+							</span>
+						</div>
+					</div>
+					<br>
+					<span onclick="javascript:toggleItemList('#expertensuche');" style="cursor: pointer;padding-top:0.5em;">&raquo;Expertensuche <span id="searchRestrictions" style="color:red"></span></span><br/> <br/>
+					<!-- <div>
+						<span id="ajaxloader"><img src="http://data.uni-muenster.de/files/ajax_big.gif" alt="loading"/></span>
+					</div> -->
+				</div>
+				<div style="float:left;" id="expertensuche" class="expertensuche">
+						Einschränkung der Suche nach Medientypen:<br/>
+
+						<span><input type="checkbox" id="cbMap" name="type" value="http://purl.org/ontology/bibo/Map" />Karten</span>
+						<span><input type="checkbox" id="cbPP" name="type" value="http://vocab.lodum.de/istg/PicturePostcard"/>Ansichtskarten</span>
+						<span><input type="checkbox" id="cbWR" name="type" value="http://vocab.lodum.de/istg/WrittenResource"/>Literatur</span>
+	                                        <span><input type="checkbox" id="cbExcerpt" name="type" value="http://purl.org/ontology/bibo/Excerpt" />Stadtinformationen</span>
+						<!--<input type="radio" name="type" value="http://purl.org/ontology/bibo/Periodical" />Reihe -->
+						<span><input type="checkbox" id="cbAll" name="type" value="all" checked="checked" />keine Einschränkung</span><br/>
+						<br/><br/>	Einschränkung auf Suchfelder:<br/>
+						<span><input type="checkbox" name="property" value="http://purl.org/dc/elements/1.1/creator,http://vocab.lodum.de/istg/cartographer,http://vocab.lodum.de/istg/editoria,http://purl.org/ontology/bibo/editor"/> Personen</span><br/>
+						<span><input type="checkbox" name="property" value="http://purl.org/dc/terms/title,http://vocab.lodum.de/istg/subtitle,http://purl.org/dc/terms/alternative,http://vocab.lodum.de/istg/paralleltitle,http://vocab.lodum.de/istg/maintitle"/> Titel</span><br/>
+						<span><input type="checkbox" name="property" value="http://purl.org/dc/elements/1.1/subject"/> Schlagworte</span><br/>
+						<span>Erscheinungsjahr<input type="text" name="timeproperty" size="4" maxlength="4"/></span>(Jahr XXXX)<br/>
+
+				</div>
+
+
+				<div id="map" style="height: 350px;width:720px;"></div>
+				<div id="sortierung" style="float:left;margin-top:30px;margin-bottom:30px;">
+					<h2 id="searchResultCount">Suchergebnisse (17)</h2>
+					Sortieren nach <a id="relevance" style="font-weight:normal"  href="javascript:search('relevanz',null,false);">Relevanz</a> |
+					<a id="dateAsc" style="font-weight:normal" href="javascript:search('date_asc',null,false);">Datum aufsteigend</a>  |
+					<a id="dateDesc" style="font-weight:normal" href="javascript:search('date_desc',null,false);">Datum absteigend</a> |
+					<a id="abc" style="font-weight:normal" href="javascript:search('abc',null,false);">Titel alphabetisch</a> <br/>
+				</div>
+	 			<div id="searchresults" style="float:left;min-height:300px;">
+
+				</div>
+				<br>
+				<br>
+		</div>
+<!--Ende2:bis hier kopieren fuer Imperia -->
+
+
+			<br style="clear:both;" />
+		</div>
+<datalist id="towns">
+	<option value="Aachen">
+	<option value="Aalen">
+	<option value="Aberdeen">
+	<option value="Achern">
+	<option value="Ahaus">
+	<option value="Ahlen">
+	<option value="Alaska">
+	<option value="Allendorf">
+	<option value="Alnwick">
+	<option value="Alt-Breisach">
+	<option value="Altena">
+	<option value="Altenburg">
+	<option value="Amberg">
+	<option value="Amsterdam">
+	<option value="Anklam">
+	<option value="Annaberg-Buchholz">
+	<option value="Anröchte">
+	<option value="Ansbach">
+	<option value="Appingedam">
+	<option value="Apremont, Chambery">
+	<option value="Aremberg">
+	<option value="Arlon">
+	<option value="Arnsberg">
+	<option value="Arolsen">
+	<option value="Aschaffenburg">
+	<option value="Ascheberg">
+	<option value="Augsburg">
+	<option value="Aurich">
+	<option value="Bad Aibling">
+	<option value="Bad Berleburg">
+	<option value="Bad Brückenau">
+	<option value="Bad Ems">
+	<option value="Bad Frankenhausen">
+	<option value="Bad Iburg">
+	<option value="Bad Kissingen">
+	<option value="Bad Krozingen">
+	<option value="Bad Laasphe">
+	<option value="Bad Mergentheim">
+	<option value="Bad Münstereifel">
+	<option value="Bad Oeynhausen">
+	<option value="Bad Sassendorf">
+	<option value="Bad Tölz">
+	<option value="Bad Waldliesborn">
+	<option value="Baden-Baden">
+	<option value="Baden-Württemberg">
+	<option value="Balve">
+	<option value="Bamberg">
+	<option value="Bardowick">
+	<option value="Baumgarten / Braszowice">
+	<option value="Bautzen">
+	<option value="Beinheim">
+	<option value="Belgien, Frankreich, Deutschland">
+	<option value="Bergkamen">
+	<option value="Berlin">
+	<option value="Bern">
+	<option value="Besigheim">
+	<option value="Biberach">
+	<option value="Biel">
+	<option value="Bielefeld">
+	<option value="Bingen">
+	<option value="Bistritz / Bistrita">
+	<option value="Bitterfeld">
+	<option value="Blaubeuren">
+	<option value="Blumenow in Fürstenberg / Havel">
+	<option value="Bocholt">
+	<option value="Bochum">
+	<option value="Boizenburg">
+	<option value="Bonn">
+	<option value="Borkum">
+	<option value="Bottrop">
+	<option value="Bozen">
+	<option value="Böblingen">
+	<option value="Brandenburg an der Havel">
+	<option value="Braunsberg / Brunsperk">
+	<option value="Braunschweig">
+	<option value="Breckerfeld">
+	<option value="Breisach">
+	<option value="Bremerhaven">
+	<option value="Bremervörde">
+	<option value="Breslau / Wroclaw">
+	<option value="Brieg / Brzeg">
+	<option value="Brighton">
+	<option value="Bristol">
+	<option value="Brno / Brünn">
+	<option value="Brunshaupten">
+	<option value="Brünn / Brno">
+	<option value="Brüssel">
+	<option value="Budapest">
+	<option value="Budweis">
+	<option value="Burbach">
+	<option value="Burg Stargard">
+	<option value="Burghausen">
+	<option value="Butzbach">
+	<option value="Buxtehude">
+	<option value="Büren">
+	<option value="Bützow">
+	<option value="Bydgoszcz / Bromberg">
+	<option value="Bystrzyca Klodzka / Habelschwerdt">
+	<option value="Calw">
+	<option value="Camposanto, Modena">
+	<option value="Cardiff">
+	<option value="Caslau / Caslav / Tschaslau">
+	<option value="Castello di Ponte, Casteldelfino">
+	<option value="Castrop-Rauxel">
+	<option value="Celle">
+	<option value="Chemnitz">
+	<option value="Chester">
+	<option value="Chotebor">
+	<option value="Churchill">
+	<option value="Chwaletitz / Chvaletice">
+	<option value="Cloppenburg">
+	<option value="Colditz">
+	<option value="Colmar">
+	<option value="Cosel / Kozle">
+	<option value="Cottbus">
+	<option value="Cuneo">
+	<option value="Czestochowa / Tschenstochau">
+	<option value="Danzig">
+	<option value="Danzig, Gdansk">
+	<option value="Danzig/ Gdansk">
+	<option value="Darlowo / Rügenwalde">
+	<option value="Darmstadt">
+	<option value="Deggendorf">
+	<option value="Deggendorf, Vilshofen">
+	<option value="Demmin">
+	<option value="Dessau">
+	<option value="Detmold">
+	<option value="Dettingen / Karlstein am Main">
+	<option value="Deutschland, Polen">
+	<option value="Diemitz">
+	<option value="Diepholz">
+	<option value="Dingolfing">
+	<option value="Donaueschingen">
+	<option value="Dorsten">
+	<option value="Dortmund">
+	<option value="Dortmund, Hamm">
+	<option value="Drensteinfurt">
+	<option value="Dresden">
+	<option value="Duderstadt">
+	<option value="Düppel">
+	<option value="Düsseldorf">
+	<option value="Eger / Cheb">
+	<option value="Ehingen">
+	<option value="Eisenach">
+	<option value="Eldena">
+	<option value="Ellwangen">
+	<option value="Emden">
+	<option value="Emmerich">
+	<option value="Emsdetten">
+	<option value="Ennigerloh">
+	<option value="Enns">
+	<option value="Ense">
+	<option value="Erfurt">
+	<option value="Erkelenz">
+	<option value="Erkrath">
+	<option value="Erwitte">
+	<option value="Esbjerg">
+	<option value="Eschwege">
+	<option value="Espelkamp">
+	<option value="Essen">
+	<option value="Estland">
+	<option value="Ettlingen">
+	<option value="Eversberg">
+	<option value="Flensburg">
+	<option value="Franfurt (Oder)">
+	<option value="Frankenhausen">
+	<option value="Frankenstein">
+	<option value="Frankfurt">
+	<option value="Frankfurt am Main">
+	<option value="Frauenberg / Hluboka nad Vltavou">
+	<option value="Freiberg">
+	<option value="Freiberg / Pribor">
+	<option value="Freiburg">
+	<option value="Freiburg/Elbe">
+	<option value="Freital">
+	<option value="Freudenberg">
+	<option value="Freudenstadt">
+	<option value="Friedland">
+	<option value="Friedrichstadt">
+	<option value="Fritzlar">
+	<option value="Ft. Smith">
+	<option value="Füssen">
+	<option value="Gadebusch">
+	<option value="Galway">
+	<option value="Gardelegen">
+	<option value="Gartz">
+	<option value="Gartz, Stettin">
+	<option value="Gdansk">
+	<option value="Geldern">
+	<option value="Gelnhausen">
+	<option value="Gelsenkirchen">
+	<option value="Gelsenkirchen (Horst)">
+	<option value="Geseke">
+	<option value="Gevelsberg">
+	<option value="Gießen, Kassel">
+	<option value="Glashütte">
+	<option value="Glatz / Klodzko">
+	<option value="Gleiwitz / Kattowitz">
+	<option value="Glindegrund">
+	<option value="Glogau / Glogow">
+	<option value="Glogow / Glogau">
+	<option value="Gmünd">
+	<option value="Goldap">
+	<option value="Goldberg">
+	<option value="Gorzów Wielkopolski / Landsberg">
+	<option value="Goslar">
+	<option value="Göppingen">
+	<option value="Görlitz">
+	<option value="Göteborg">
+	<option value="Göttingen">
+	<option value="Graz">
+	<option value="Grätz / Hradec nad Moravici">
+	<option value="Greifswald">
+	<option value="Grona / Grünberg">
+	<option value="Groningen">
+	<option value="Gumbinnen (Gussev/ Oblast Kaliningrad)">
+	<option value="Güstrow">
+	<option value="Gütersloh">
+	<option value="Hagen">
+	<option value="Hagenow">
+	<option value="Halberstadt">
+	<option value="Haldensleben">
+	<option value="Hall">
+	<option value="Halle">
+	<option value="Hamburg">
+	<option value="Hamburg, Bremen">
+	<option value="Hameln">
+	<option value="Hamm">
+	<option value="Hanau">
+	<option value="Hannover">
+	<option value="Hartum">
+	<option value="Hattingen">
+	<option value="Heek">
+	<option value="Heidenheim">
+	<option value="Heilbronn">
+	<option value="Heiligenbeil">
+	<option value="Heiligenbeil / Mamonowo">
+	<option value="Helgoland">
+	<option value="Hennersdorf / Henryków Luba&amp;#324;ski, Lauban/ Luban">
+	<option value="Herford">
+	<option value="Hermannstadt / Sibiu">
+	<option value="Hiddenhausen">
+	<option value="Hilchenbach">
+	<option value="Hildesheim">
+	<option value="Hille">
+	<option value="Himmelsthür">
+	<option value="Hohenfriedberg, Striegau / Strzegom">
+	<option value="Holzwickede">
+	<option value="Homberg/Ohm">
+	<option value="Hopsten">
+	<option value="Horb">
+	<option value="Horneburg">
+	<option value="Hörstel">
+	<option value="Höxter">
+	<option value="Huefingen">
+	<option value="Hull">
+	<option value="Hüllhorst">
+	<option value="Ingolstadt">
+	<option value="Innsbruck">
+	<option value="Iserlohn">
+	<option value="Isny">
+	<option value="Jablunkau / Jablunkov">
+	<option value="Jever">
+	<option value="Jülich">
+	<option value="Kahla">
+	<option value="Kaiserslautern">
+	<option value="Kaliningrad">
+	<option value="Kaliningrad / Primorsk">
+	<option value="Kamen">
+	<option value="Kamien Pomorski / Kammin">
+	<option value="Karlsruhe">
+	<option value="Kaschau / Kosice">
+	<option value="Kassel">
+	<option value="Katowice / Kattowitz">
+	<option value="Kattowitz / Katowice">
+	<option value="Käsmark / Kezmarok">
+	<option value="Kemel, Watzelhain">
+	<option value="Kempten">
+	<option value="Kempten (Allgäu)">
+	<option value="Kesselsdorf, Wilsdruff">
+	<option value="Kichheim">
+	<option value="Kiel">
+	<option value="Kitzingen">
+	<option value="Klaipeda / Memel">
+	<option value="Klausenburg / Cluj-Napoca">
+	<option value="Kleve">
+	<option value="Kleve / Bocholt">
+	<option value="Koblenz">
+	<option value="Kohlscheid">
+	<option value="Kolberg">
+	<option value="Konstanz">
+	<option value="Kopenhagen">
+	<option value="Koszalin / Köslin">
+	<option value="Köln">
+	<option value="Königsberg / Kaliningrad">
+	<option value="Köslin - Stolp - Danzig">
+	<option value="Krakau">
+	<option value="Kratzeburg">
+	<option value="Krefeld">
+	<option value="Kreis Fritzlar-Homberg">
+	<option value="Kremsier / Krom&amp;#283;&amp;#345;íž">
+	<option value="Kreuztal">
+	<option value="Kristiansand">
+	<option value="Kronstadt / Bra&amp;#537;ov">
+	<option value="Kulmbach">
+	<option value="Künzelsau">
+	<option value="Küstrin">
+	<option value="Laar">
+	<option value="Ladbergen">
+	<option value="Landau">
+	<option value="Landau an der Isar">
+	<option value="Landau, Isargemünd">
+	<option value="Landshut">
+	<option value="Langenau">
+	<option value="Lauenburg/Elbe">
+	<option value="Laupheim">
+	<option value="Lauterburg / Lauterbourg">
+	<option value="Lech">
+	<option value="Leiden / Amsterdam">
+	<option value="Lengerich">
+	<option value="Leutschau / Levoca">
+	<option value="Lienen">
+	<option value="Lindau">
+	<option value="Lindau (Bodensee)">
+	<option value="Lingen">
+	<option value="Linz">
+	<option value="Lippetal">
+	<option value="Lippstadt">
+	<option value="Litauen, Estland">
+	<option value="Litauen, Lettland, Estland">
+	<option value="Littau / Litovel">
+	<option value="Lodz">
+	<option value="London">
+	<option value="Lotte">
+	<option value="Lörrach">
+	<option value="Löwenstein">
+	<option value="Ludwigshafen">
+	<option value="Ludwigslust">
+	<option value="Luxembourg / Luxemburg">
+	<option value="Lübeck">
+	<option value="Lübtheen">
+	<option value="Lübtorf">
+	<option value="Lüchow">
+	<option value="Lüdenscheid">
+	<option value="Lüdinghausen">
+	<option value="Lüneburg">
+	<option value="Lünen">
+	<option value="Magdeburg">
+	<option value="Mainz">
+	<option value="Mainz, Mannheim">
+	<option value="Malchin">
+	<option value="Manchester">
+	<option value="Mannheim">
+	<option value="Marienwerder">
+	<option value="Marsovice/ Marschowitz, Neweklau/ Neveklov">
+	<option value="Masserberg">
+	<option value="Medebach">
+	<option value="Meissen">
+	<option value="Memel">
+	<option value="Memmingen">
+	<option value="Meppen">
+	<option value="Meschede">
+	<option value="Mettingen">
+	<option value="Milano / Mailand">
+	<option value="Minden">
+	<option value="Mohrungen / Morag">
+	<option value="Moldauthein / Tyn nad Vltavou">
+	<option value="Mollwitz / Malujovice">
+	<option value="Montabaur">
+	<option value="München">
+	<option value="Münster">
+	<option value="Namslau / Namyslow">
+	<option value="Narva">
+	<option value="Naugard / Nowogard">
+	<option value="Naumburg">
+	<option value="Neisse / Nysa">
+	<option value="Neiße">
+	<option value="Nemi">
+	<option value="Neu-Ulm">
+	<option value="Neubrandenburg">
+	<option value="Neuenkirchen">
+	<option value="Neuruppin">
+	<option value="Neuss">
+	<option value="Neustrelitz">
+	<option value="Neutra / Nitra">
+	<option value="Neuwied">
+	<option value="Newcastle upon Tyne">
+	<option value="Nieder-Alteich">
+	<option value="Nienburg">
+	<option value="Nizza / Nice">
+	<option value="Norden">
+	<option value="Norderney">
+	<option value="Nordhausen">
+	<option value="Nordheim">
+	<option value="Nordhorn">
+	<option value="Nordrhein-Westfalen">
+	<option value="Nordwalde">
+	<option value="Northeim">
+	<option value="Nördlingen">
+	<option value="Nürnberg">
+	<option value="Nysa / Neisse">
+	<option value="Oberhausen">
+	<option value="Oberhof">
+	<option value="Oberitalienische Seen">
+	<option value="Ochsenhausen">
+	<option value="Oelde">
+	<option value="Offenburg">
+	<option value="Ohlau / Olawa">
+	<option value="Oldenburg">
+	<option value="Olmütz / Olomouc">
+	<option value="Olpe">
+	<option value="Oppeln">
+	<option value="Oppeln, Gleiwitz">
+	<option value="Osnabrück">
+	<option value="Ostbevern">
+	<option value="Ostrau / Ostrava">
+	<option value="Ottmachau / Otmuchow">
+	<option value="Öhringen">
+	<option value="Ötz">
+	<option value="Paderborn">
+	<option value="Papenburg">
+	<option value="Parchim">
+	<option value="Paris">
+	<option value="Passau">
+	<option value="Pärnu">
+	<option value="Peine">
+	<option value="Penzlin">
+	<option value="Petershagen">
+	<option value="Pforzheim">
+	<option value="Philippsburg">
+	<option value="Pilsen">
+	<option value="Pisek">
+	<option value="Plauen">
+	<option value="Pleinting, Nieder-Alteich">
+	<option value="Plettenberg">
+	<option value="Polen">
+	<option value="Porta Westfalice">
+	<option value="Potsdam">
+	<option value="Prag">
+	<option value="Prazzo, Vinadio">
+	<option value="Preußisch Eylau">
+	<option value="Promenhof / Broumov u Zadního Chodova">
+	<option value="Quakenbrück">
+	<option value="Quedlinburg">
+	<option value="Querfurt">
+	<option value="Rahden">
+	<option value="Rastatt">
+	<option value="Ratzeburg">
+	<option value="Ravensburg">
+	<option value="Rechlin">
+	<option value="Recke">
+	<option value="Rees">
+	<option value="Regensburg">
+	<option value="Reichenhall">
+	<option value="Reutlingen">
+	<option value="Rhede (Ems)">
+	<option value="Rheine">
+	<option value="Rheinfelden">
+	<option value="Rheinweiler">
+	<option value="Rietberg">
+	<option value="Riga">
+	<option value="Rom">
+	<option value="Ronow">
+	<option value="Rosenheim">
+	<option value="Rosersberg">
+	<option value="Rostock">
+	<option value="Rotenburg">
+	<option value="Rothenburg">
+	<option value="Röbel">
+	<option value="Ruppin">
+	<option value="Rügen">
+	<option value="Saabrücken">
+	<option value="Saalfeld">
+	<option value="Saar / Zdar nad Sazavou">
+	<option value="Saarbrücken">
+	<option value="Sachsenhausen (Waldeck)">
+	<option value="Saerbeck">
+	<option value="Salisbury">
+	<option value="Salzburg">
+	<option value="Salzgitter">
+	<option value="Salzwedel">
+	<option value="Sankt Augustin">
+	<option value="Sassenberg">
+	<option value="Satu Mare / Sathmar">
+	<option value="Savoyen">
+	<option value="Schachen">
+	<option value="Schärding">
+	<option value="Schlawno / Schlawe">
+	<option value="Schleiz">
+	<option value="Schleswig">
+	<option value="Schmalkalden">
+	<option value="Schmallenberg">
+	<option value="Schönberg">
+	<option value="Schröck / Leopoldshafen, Leimersheim">
+	<option value="Schwalmstadt">
+	<option value="Schwandorf">
+	<option value="Schwanheide">
+	<option value="Schwarzenberg">
+	<option value="Schwäbisch Hall">
+	<option value="Schwedt">
+	<option value="Schweinfurt">
+	<option value="Schwelm, Enneptal">
+	<option value="Schwerin">
+	<option value="Schwerte">
+	<option value="Sedlcany">
+	<option value="Selm">
+	<option value="Sevilla">
+	<option value="Siegburg">
+	<option value="Siegen">
+	<option value="Simbach, Braunau">
+	<option value="Smolensk">
+	<option value="Soest">
+	<option value="Soltau">
+	<option value="Sondershausen">
+	<option value="Soor /Zdar, Trautenau, Trutnov">
+	<option value="Soor /Zdar, Trautenau/ Trutnov">
+	<option value="Spandau">
+	<option value="Spittal">
+	<option value="Sprockhövel">
+	<option value="St. Gallen">
+	<option value="St. Petersburg">
+	<option value="Starogard">
+	<option value="Stemwede">
+	<option value="Stendal">
+	<option value="Stettin - Kolberg - Landsberg">
+	<option value="Stettin / Szczecin">
+	<option value="Stevenage">
+	<option value="Stockholm">
+	<option value="Stockstadt">
+	<option value="Stolberg">
+	<option value="Störmede">
+	<option value="Stralsund">
+	<option value="Strassburg / Strasbourg">
+	<option value="Strassburg / Strasbourg, Hagenau">
+	<option value="Straubing">
+	<option value="Stuttgart">
+	<option value="Suhl">
+	<option value="Swindujscie / Swinemünde">
+	<option value="Tallinn">
+	<option value="Tartu">
+	<option value="Tecklenburg">
+	<option value="Telgte">
+	<option value="Test Stadt">
+	<option value="Teststadt">
+	<option value="Thüringen / Sachsen-Anhalt">
+	<option value="Torgau">
+	<option value="Toronto">
+	<option value="Traunstein">
+	<option value="Travemünde">
+	<option value="Treptow">
+	<option value="Trier">
+	<option value="Turin">
+	<option value="Tübingen">
+	<option value="Uchte">
+	<option value="Ueckermünde">
+	<option value="Uelzen">
+	<option value="Ulm">
+	<option value="Unna">
+	<option value="Urach">
+	<option value="Usedom">
+	<option value="Velletri">
+	<option value="Versmold">
+	<option value="Verviers">
+	<option value="Villefranche, Nizza">
+	<option value="Villingen, Donaueschingen">
+	<option value="Vilshofen">
+	<option value="Wadersloh">
+	<option value="Waiblingen">
+	<option value="Walbrzych / Waldenburg">
+	<option value="Walcz">
+	<option value="Waldshut">
+	<option value="Wallis">
+	<option value="Warburg">
+	<option value="Waren">
+	<option value="Warendorf">
+	<option value="Warnemünde">
+	<option value="Warstein">
+	<option value="Wasserburg">
+	<option value="Weesen">
+	<option value="Weiden">
+	<option value="Weiden in der Oberpfalz">
+	<option value="Weimar">
+	<option value="Weißenburg in Bayern">
+	<option value="Weißenburg in Bayern">
+	<option value="Welver">
+	<option value="Welzheim">
+	<option value="Werl">
+	<option value="Werne">
+	<option value="Wernigerode">
+	<option value="Wesel">
+	<option value="Wesel/Xanten">
+	<option value="Wesenberg">
+	<option value="Westbevern">
+	<option value="Westerkappeln">
+	<option value="Westmeath">
+	<option value="Wetter">
+	<option value="Wettringen">
+	<option value="Wetzlar">
+	<option value="Wexford">
+	<option value="Wickede (Ruhr)">
+	<option value="Wien">
+	<option value="Wildberg">
+	<option value="Wilhelmshaven">
+	<option value="Wilimow">
+	<option value="Wilmersdorf">
+	<option value="Wilnsdorf">
+	<option value="Winchester">
+	<option value="Wischelburg">
+	<option value="Wismar">
+	<option value="Witten">
+	<option value="Wittenberge">
+	<option value="Wittenburg">
+	<option value="Woldegk">
+	<option value="Wolfenbüttel">
+	<option value="Wuppertal">
+	<option value="Würselen">
+	<option value="Würzburg">
+	<option value="Xanten">
+	<option value="Zahaj / Zahaji">
+	<option value="Zeitz">
+	<option value="Zeven">
+	<option value="Zittau">
+	<option value="Zürich">
+	<option value="Zwiesel">
+	<option value="Zwittau / Svitavy">
+	<option value="Špindler&amp;#367;v Mlýn / Spindelmühle">
+</datalist>
+</body>
+</html>

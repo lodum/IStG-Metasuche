@@ -1,0 +1,98 @@
+h1 sup { font-size:.4em; line-height:2em; }
+
+body {
+//	background:#ffffff;
+//	font-family: 'Lucida Sans', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
+//	font-size: 12px;
+//	margin-top: 40px;
+//	margin-left: 20px;
+	color: #555;
+}
+
+a { color:  #006E89; }
+
+a:hover { color:  #B1C800; }
+
+a img, a:hover img{border:0}
+
+h1, h1 a:link, h1 a:visited {
+	text-transform: uppercase;
+	color: #006E89;
+	text-decoration: none;
+	font-size: 28px;
+	font-weight: normal;
+	margin-top: 0;
+}
+
+.searchresult{
+	font-size:120%;
+	color: #000000;
+	padding: 0px 5px;
+	width: 700px;
+}
+
+.title {
+	min-height: 80px;
+}
+
+.properties {
+	padding-left:12px;
+}
+
+@media only screen and (max-width:800px){
+	.searchresult {
+		width:500px;
+	}
+}
+
+a.rawdata:link, a.rawdata:visited{
+	color: lightgrey;
+	text-decoration:hidden;
+	margin-left: 10px;
+}
+
+.istg_main_wrapper {margin:50px;width:800px;height:inherit;}
+
+.ui-button { margin-left: -1px; }
+.ui-button-icon-only .ui-button-text { padding: 0.35em; }
+.ui-autocomplete-input { margin: 0; padding: 0.48em 0 0.47em 0.45em; }
+
+.ui-front{
+	z-index: 1001;
+}
+
+#sortierung a:link { text-decoration:none; font-weight:normal; color:#000000; }
+#sortierung a:visited { text-decoration:none; font-weight:normal; color:#000000; }
+#sortierung a:hover { text-decoration:none; font-weight:bold; background-color:#FFFFFF; }
+#sortierung a:active { text-decoration:none; font-weight:bold; background-color:#FFFFFF; }
+#sortierung a:focus { text-decoration:none; font-weight:bold; background-color:#FFFFFF; }
+
+#highlight { background-color:#BCBC00;font-weight: bold;}
+
+.error{padding-top:50px;color:#FF0000;}
+
+.expertensuche{padding:15px;border:1px dashed #cac9d0; /*background:#fefefe;*/ color:#78777f; font-weight:700;width:550px;min-height:160px;}
+
+#simplemodal-container a.modalCloseImg {
+	background:url(/istg/x.png) no-repeat; /* adjust url as required */
+	width:25px;
+	height:29px;
+	display:inline;
+	z-index:3200;
+	position:absolute;
+	top:-15px;
+	right:-18px;
+	cursor:pointer;
+}
+
+// Classes
+.center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.center-block {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
