@@ -274,6 +274,7 @@ function search($sort,$offset,$fireCount){
 		$('#dateAsc').css('font-weight','normal');
 		$('#dateDesc').css('font-weight','normal');
 		$sorting=" ";
+		$('#sortNote').hide();
 		if($sort == undefined){
 			if($("#expertensuche input[name=type]:checkbox:checked").size() == 1){
 				if($("#expertensuche input[name=type]:checkbox:checked")[0].value == "http://purl.org/ontology/bibo/Map"){
@@ -285,7 +286,8 @@ function search($sort,$offset,$fireCount){
 				} else if($("#expertensuche input[name=type]:checkbox:checked")[0].value == "http://vocab.lodum.de/istg/WrittenResource") {
 					$sorting="DESC(?weight) DESC(?issued) ";
 					$('#dateDesc').css('font-weight','bold');
-					$('#sortierung').after('<p id="note">"Bei dieser Sortierung der Ergebnisse werden die Kriterien "Relevanz" und "Erscheinungsjahr" kombiniert, damit die wichtigsten und die aktuellsten/ältesten Treffer zuerst angezeigt werden. Dabei kann es zugunsten der Listung des Suchbegriffs im Titel zu Verschiebungen in der chronologischen Reihenfolge kommen."</p>');
+					$('#sortNote').show();
+					// $('#sortierung').after('<p id="note">"Bei dieser Sortierung der Ergebnisse werden die Kriterien "Relevanz" und "Erscheinungsjahr" kombiniert, damit die wichtigsten und die aktuellsten/ältesten Treffer zuerst angezeigt werden. Dabei kann es zugunsten der Listung des Suchbegriffs im Titel zu Verschiebungen in der chronologischen Reihenfolge kommen."</p>');
 				} else if($("#expertensuche input[name=type]:checkbox:checked")[0].value == "http://purl.org/ontology/bibo/Excerpt") {
 					$sorting="DESC(?weight) ASC(str(?title)) ";
 					$('#abc').css('font-weight','bold');
@@ -304,12 +306,14 @@ function search($sort,$offset,$fireCount){
 				//ty+="?x dct:issued ?issued.";
 				$sorting="DESC(?weight) DESC(?issued) ";
 				$('#dateDesc').css('font-weight','bold');
-				$('#sortierung').after('<p id="note">"Bei dieser Sortierung der Ergebnisse werden die Kriterien "Relevanz" und "Erscheinungsjahr" kombiniert, damit die wichtigsten und die aktuellsten/ältesten Treffer zuerst angezeigt werden. Dabei kann es zugunsten der Listung des Suchbegriffs im Titel zu Verschiebungen in der chronologischen Reihenfolge kommen."</p>');
+				$('#sortNote').show();
+				// $('#sortierung').after('<p id="note">"Bei dieser Sortierung der Ergebnisse werden die Kriterien "Relevanz" und "Erscheinungsjahr" kombiniert, damit die wichtigsten und die aktuellsten/ältesten Treffer zuerst angezeigt werden. Dabei kann es zugunsten der Listung des Suchbegriffs im Titel zu Verschiebungen in der chronologischen Reihenfolge kommen."</p>');
 		 	}else if($sort=="date_asc"){
 				//ty+="?x dct:issued ?issued.";
 				$sorting="DESC(?weight) ASC(?issued) ";
 				$('#dateAsc').css('font-weight','bold');
-				$('#sortierung').after('<p id="note">"Bei dieser Sortierung der Ergebnisse werden die Kriterien "Relevanz" und "Erscheinungsjahr" kombiniert, damit die wichtigsten und die aktuellsten/ältesten Treffer zuerst angezeigt werden. Dabei kann es zugunsten der Listung des Suchbegriffs im Titel zu Verschiebungen in der chronologischen Reihenfolge kommen."</p>');
+				$('#sortNote').show();
+				// $('#sortierung').after('<p id="note">"Bei dieser Sortierung der Ergebnisse werden die Kriterien "Relevanz" und "Erscheinungsjahr" kombiniert, damit die wichtigsten und die aktuellsten/ältesten Treffer zuerst angezeigt werden. Dabei kann es zugunsten der Listung des Suchbegriffs im Titel zu Verschiebungen in der chronologischen Reihenfolge kommen."</p>');
 			}else if($sort=="abc"){
 				$sorting="DESC(?weight) ASC(str(?title)) ";
 				$('#abc').css('font-weight','bold');

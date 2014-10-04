@@ -71,7 +71,15 @@ a.rawdata:link, a.rawdata:visited{
 
 .error{padding-top:50px;color:#FF0000;}
 
-.expertensuche{padding:15px;border:1px dashed #cac9d0; /*background:#fefefe;*/ color:#78777f; font-weight:700;width:550px;min-height:160px;}
+.expertensuche {
+	padding:15px;
+	border:1px dashed #cac9d0;
+	/*background:#fefefe;*/
+	color:#78777f;
+	font-weight:700;
+	width:700px;
+	min-height:160px;
+}
 
 #simplemodal-container a.modalCloseImg {
 	background:url(/istg/x.png) no-repeat; /* adjust url as required */
@@ -95,4 +103,8 @@ a.rawdata:link, a.rawdata:visited{
 	display: block;
 	margin-left: auto;
 	margin-right: auto;
+}
+
+#sortNote {
+	width: 700px;
 }
