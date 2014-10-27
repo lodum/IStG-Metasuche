@@ -700,6 +700,7 @@ function search($sort,$offset,$fireCount){
 									titleArray[i]=title;
 
 									//Select Icon for the type
+									figure = "<figure><img src=\"http://data.uni-muenster.de/istg/document.png\" alt=\"Unbekannter Dokumenttyp\"></figure>";
 									icon="<img src=\"http://data.uni-muenster.de/istg/document.png\" alt=\"Unbekannter Dokumenttyp\">";
 									type="";
 									console.log(json[i].typ);
@@ -707,87 +708,113 @@ function search($sort,$offset,$fireCount){
 										if(json[i].comment && json[i].comment[0].search("Elektronische Ressource")!=-1){
 											type="Disc";
 											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/CD-ROM.png\" alt=\"CD-ROM\">";
+											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/CD-ROM.png\" alt=\"CD-ROM\"><figcaption>Disc</figcaption></figure>";
 										}else if($.inArray("Bandaufführung",json[i].type)!=-1){
 											type="Einzel-<br />band";
 											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Bandauffuehrung\">";
+											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Bandauffuehrung\"><figcaption>Einzel-<br />band</figcaption</figure>";
 										}else if($.inArray("Q", json[i].type)!=-1) {
 											type = "Buch";
 											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\">";
+											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\"><figcaption>Buch</figcaption</figure>";
 										}else if($.inArray("Zeitschriftenband",json[i].type)!=-1) {
 											type = "Zeit-<br />schriften-<br />band";
 											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschriftenband.png\" alt=\"Zeitschriftenband\">";
+											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschriftenband.png\" alt=\"Zeitschriftenband\"><figcaption>Zeit-<br />schriften-<br />band</figcaption</figure>";
 										}else if($.inArray("Zeitschrift", json[i].type)!=-1) {
 											type = "Zeitschrift";
 											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschrift.png\" alt=\"Zeitschrift\" >";
+											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschrift.png\" alt=\"Zeitschrift\" ><figcaption>Zeitschrift</figcaption</figure>";
 										}else if( $.inArray("http://purl.org/ontology/bibo/Book", json[i].typ)!=-1){
 											//icon="<img src=\"http://data.uni-muenster.de/istg/book.png\" alt=\"Buch\">";
 											type="Buch";
 											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\">";
+											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\"><figcaption>Buch</figcaption</figure>";
 										}else if($.inArray("http://purl.org/ontology/bibo/Map", json[i].typ)!=-1){
 											type="Karte";
 											icon="<img style=\"width:32px;height32px;\" src=\"http://data.uni-muenster.de/istg/images/Karten.png\" alt=\"Karte\">";
+											figure = "<figure><img style=\"width:32px;height32px;\" src=\"http://data.uni-muenster.de/istg/images/Karten.png\" alt=\"Karte\"><figcaption>Karte</figcaption</figure>";
 											//icon="<img src=\"http://data.uni-muenster.de/istg/map.png\" alt=\"Karte\">";
 										}else if($.inArray("http://purl.org/ontology/bibo/Periodical", json[i].typ)!=-1 || $.inArray("http://purl.org/ontology/bibo/MultiVolumeBook", json[i].typ)!=-1){
 											//icon="<img src=\"http://data.uni-muenster.de/istg/page_copy.png\" alt=\"Reihe\">";
 											type="mehr-<br />bändiges Werk";
 											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/mehrbaendiges%20Werk.png\" alt=\"mehrbaendiges Werk\">";
+											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/mehrbaendiges%20Werk.png\" alt=\"mehrbaendiges Werk\"><figcaption>mehr-<br />bändiges Werk</figcaption</figure>";
 										}else if( $.inArray("http://vocab.lodum.de/istg/PicturePostcard", json[i].typ)!=-1){
 											//icon="<img src=\"http://data.uni-muenster.de/istg/postcard.png\" alt=\"Ansichtskarte\">";
 											type="Ansichts-<br />karte";
 											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Ansichtskarten_2.png\" alt=\"Ansichtskarte\">";
+											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Ansichtskarten_2.png\" alt=\"Ansichtskarte\"><figcaption>Ansichts-<br />karte</figcaption</figure>";
 										}else if( $.inArray("http://vocab.lodum.de/istg/Atlas", json[i].typ)!=-1){
 											icon="<img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\">";
+											figure = "<figure><img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\"><figcaption></figcaption</figure>";
 										}else if( $.inArray("http://vocab.lodum.de/istg/Atlas", json[i].typ)!=-1){
 											icon="<img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\">";
+											figure = "<figure><img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\"><figcaption></figcaption</figure>";
 										}else if( $.inArray("http://purl.org/ontology/bibo/Excerpt", json[i].typ)!=-1){
 											type="Stadt-<br />information";
 											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Stadtinformationen.png\" alt=\"Stadtinformation\">";
+											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Stadtinformationen.png\" alt=\"Stadtinformation\"><figcaption>Stadt-<br />information</figcaption</figure>";
 										}else if( $.inArray("http://purl.org/ontology/bibo/Article", json[i].typ)!=-1){
 											type="Aufsatz";
 											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Aufsatz.png\" alt=\"Aufsatz\">";
+											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Aufsatz.png\" alt=\"Aufsatz\"><figcaption>Aufsatz</figcaption</figure>";
 										}else if($.inArray("http://xmlns.com/foaf/spec/#Person", json[i].typ)!=-1){
 											werke = json[i].werke;
 											if(json[i].comment && json[i].comment[0].search("Elektronische Ressource")!=-1){
 												type="Disc";
 												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/CD-ROM.png\" alt=\"CD-ROM\">";
+												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/CD-ROM.png\" alt=\"CD-ROM\"><figcaption>Disc</figcaption</figure>";
 											}else if($.inArray("Bandaufführung",json[i].type)!=-1){
 												type="Einzel-<br />band";
 												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Bandauffuehrung\">";
+												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Bandauffuehrung\"><figcaption>Einzel-<br />band</figcaption</figure>";
 											}else if($.inArray("Q", json[i].type)!=-1) {
 												type = "Q";
 												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\">";
+												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\"><figcaption>Q</figcaption</figure>";
 											}else if($.inArray("Zeitschriftenband",json[i].type)!=-1) {
 												type = "Zeit-<br />schriften-<br />band";
 												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschriftenband.png\" alt=\"Zeitschriftenband\">";
+												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschriftenband.png\" alt=\"Zeitschriftenband\"><figcaption>Zeit-<br />schriften-<br />band</figcaption</figure>";
 											}else if($.inArray("Zeitschrift", json[i].type)!=-1) {
 												type = "Zeitschrift";
 												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschrift.png\" alt=\"Zeitschrift\" >";
+												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschrift.png\" alt=\"Zeitschrift\" ><figcaption>Zeitschrift</figcaption</figure>";
 											}else if( $.inArray("http://purl.org/ontology/bibo/Book", json[i].werketyp)!=-1){
-                                                                                        	//icon="<img src=\"http://data.uni-muenster.de/istg/book.png\" alt=\"Buch\">";
+                        //icon="<img src=\"http://data.uni-muenster.de/istg/book.png\" alt=\"Buch\">";
 												type="Buch";
 												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\">";
-                                                                                	}else if($.inArray("http://purl.org/ontology/bibo/Map", json[i].werketyp)!=-1){
-                                                                                        	//icon="<img src=\"http://data.uni-muenster.de/istg/map.png\" alt=\"Karte\">";
+												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\"><figcaption>Buch</figcaption</figure>";
+                    	}else if($.inArray("http://purl.org/ontology/bibo/Map", json[i].werketyp)!=-1){
+                      	//icon="<img src=\"http://data.uni-muenster.de/istg/map.png\" alt=\"Karte\">";
 												type="Karte";
 												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Karten.png\" alt=\"Karte\">";
-                                                                                	}else if($.inArray("http://purl.org/ontology/bibo/Periodical", json[i].werketyp)!=-1 || $.inArray("http://purl.org/ontology/bibo/MultiVolumeBook", json[i].typ)!=-1){
-                                                                                        	//icon="<img src=\"http://data.uni-muenster.de/istg/page_copy.png\" alt=\"Reihe\">";
+												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Karten.png\" alt=\"Karte\"><figcaption>Karte</figcaption</figure>";
+                    	}else if($.inArray("http://purl.org/ontology/bibo/Periodical", json[i].werketyp)!=-1 || $.inArray("http://purl.org/ontology/bibo/MultiVolumeBook", json[i].typ)!=-1){
+                       	//icon="<img src=\"http://data.uni-muenster.de/istg/page_copy.png\" alt=\"Reihe\">";
 												type="mehr-<br />bändiges Werk";
 												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/mehrbaendiges%20Werk.png\" alt=\"mehrbaendiges Werk\">";
-                                                                                	}else if( $.inArray("http://vocab.lodum.de/istg/PicturePostcard", json[i].werketyp)!=-1){
-                                                                                        	//icon="<img src=\"http://data.uni-muenster.de/istg/postcard.png\" alt=\"Ansichtskarte\">";
+												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/mehrbaendiges%20Werk.png\" alt=\"mehrbaendiges Werk\"><figcaption>mehr-<br />bändiges Werk</figcaption</figure>";
+                      }else if( $.inArray("http://vocab.lodum.de/istg/PicturePostcard", json[i].werketyp)!=-1){
+                       	//icon="<img src=\"http://data.uni-muenster.de/istg/postcard.png\" alt=\"Ansichtskarte\">";
 												type="Ansichts-<br />karte";
 												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Ansichtskarten_2.png\" alt=\"Ansichtskarte\">";
-                                                                                	}else if( $.inArray("http://vocab.lodum.de/istg/Atlas", json[i].werketyp)!=-1){
-                                                                                        	icon="<img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\">";
-                                                                                	}else if( $.inArray("http://vocab.lodum.de/istg/Atlas", json[i].werketyp)!=-1){
-                                                                                        	icon="<img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\">";
-                                                                                	}else if( $.inArray("http://purl.org/ontology/bibo/Excerpt", json[i].typ)!=-1){
+												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Ansichtskarten_2.png\" alt=\"Ansichtskarte\"><figcaption>Ansichts-<br />karte</figcaption</figure>";
+                    	}else if( $.inArray("http://vocab.lodum.de/istg/Atlas", json[i].werketyp)!=-1){
+                        icon="<img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\">";
+                        figure = "<figure><img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\"><figcaption></figcaption</figure>";
+                    	}else if( $.inArray("http://vocab.lodum.de/istg/Atlas", json[i].werketyp)!=-1){
+                        icon="<img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\">";
+                        figure = "<figure><img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\"><figcaption></figcaption</figure>";
+                    	}else if( $.inArray("http://purl.org/ontology/bibo/Excerpt", json[i].typ)!=-1){
 												type="Stadt-&nbspinformation"
 												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Stadtinformationen.png\" alt=\"Stadtinformation\">";
+												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Stadtinformationen.png\" alt=\"Stadtinformation\"><figcaption>Stadt-&nbspinformation</figcaption</figure>";
 											}else if( $.inArray("http://purl.org/ontology/bibo/Article", json[i].typ)!=-1){
 												type="Aufsatz";
 												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Aufsatz.png\" alt=\"Aufsatz\">";
+												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Aufsatz.png\" alt=\"Aufsatz\"><figcaption>Aufsatz</figcaption</figure>";
 											}
 										}
 									}
@@ -796,20 +823,21 @@ function search($sort,$offset,$fireCount){
 										werke = json[i].werke;
 									}
 
+									//Build HTML for results
 									if(werke != undefined){
 										$.each(werke,function(index){
 											searchCount++;
 											var werk = werke[index];
 											$("#searchresults").append("<div style=\"float:left; border:1px solid #cac9d0;padding:1em;min-height:70px;margin-top:20px;\" class='searchresult' id='result_"+j+"_outer' >"
-											+"<div class=\"title\" id='result_"+i+"'><div style=\"width:50px;height:32px;float:left;text-align:center;font-size:9px;\">"+icon+"<br /><div style=\"color:#2F4679;line-height:1.5;margin-left:0px;padding-top:5px;\">"+type+"</div></div>"
-											+"<a name=\""+werk.hashCode()+"\"></a><div style=\"padding-left:65px;\"><a  href=\"javascript:showProperties('"+werke[index]+"','"+j+"','true')\"><span class=\"stringresult\">" + title+ "</span></a>"
+											+"<div class=\"title\" id='result_"+i+"'><div style=\"width:50px;height:32px;float:left;text-align:center;font-size:9px;\"><div class=\"count\">"+($offset+j)+". </div><div class=\"icon\">"+figure+"</div></div>"
+											+"<a name=\""+werk.hashCode()+"\"></a><div style=\"padding-left:90px;\"><a  href=\"javascript:showProperties('"+werke[index]+"','"+j+"','true')\"><span class=\"stringresult\">" + title+ "</span></a>"
 											+"</span><br/><span style=\"font-size:9px;\">"+subtitle+"</span></div></div><div class=\"properties\" id=\"properties_"+j+"\" style=\"float:left;\" ></div></div>");
 										});
 									} else {
 										searchCount++;
 										$("#searchresults").append("<div style=\"float:left; border:1px solid #cac9d0;padding:1em;min-height:70px;margin-top:20px;\" class='searchresult' id='result_"+j+"_outer' >"
-										+"<div class=\"title\" id='result_"+i+"'><div style=\"width:50px;height:32px;float:left;text-align:center;font-size:9px;\">"+icon+"<br /><div style=\"color:#2F4679;line-height:1.5;margin-left:0px;padding-top:5px;\">"+type+"</div></div>"
-										+"<a name=\""+i.hashCode()+"\"></a><div style=\"padding-left:65px;\"><a href=\"javascript:showProperties('"+i+"','"+j+"','true')\"><span class=\"stringresult\">" + title+ "</span></a>"
+										+"<div class=\"title\" id='result_"+i+"'><div style=\"width:50px;height:32px;float:left;text-align:center;font-size:9px;\"><div class=\"count\">"+($offset+j)+". </div><div class=\"icon\">"+figure+"</div></div>"
+										+"<a name=\""+i.hashCode()+"\"></a><div style=\"padding-left:90px;\"><a href=\"javascript:showProperties('"+i+"','"+j+"','true')\"><span class=\"stringresult\">" + title+ "</span></a>"
 										+"</span><br/><span style=\"font-size:9px;\">"+subtitle+"</span></div></div><div class=\"properties\" id=\"properties_"+j+"\" style=\"float:left;\" ></div></div>");
 									}
 

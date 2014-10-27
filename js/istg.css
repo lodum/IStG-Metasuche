@@ -108,3 +108,24 @@ a.rawdata:link, a.rawdata:visited{
 #sortNote {
 	width: 700px;
 }
+
+figure {
+  text-align: center;
+  display: table;
+}
+
+figcaption {
+	color:#2F4679;
+	line-height:1.5;
+	margin-left:0px;
+	padding-top:5px;
+}
+
+.count {
+	color:#2F4679;
+	float: left;
+}
+
+.icon {
+	padding-left: 35px;
+}
