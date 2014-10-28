@@ -1,8 +1,7 @@
 //<![CDATA[
 
-
 //initialize all elements, after dom is loaded
- $(document).ready(function () {
+$(document).ready(function () {
 	$("#ajaxloader").hide();
 	$("#expertensuche").hide();
 	$("#sortierung").hide();
@@ -10,8 +9,8 @@
 	$("div#map").hide();
 	$("#searchbox").keypress(function(event){
 		if(event.keyCode == 13){
-		        search(null,null,true);
-		    }
+		  search(null,null,true);
+		}
 	});
 
 	$('#expertensuche input[name=type]').click(function(evt){
@@ -42,7 +41,6 @@
 		$('#searchbox').val(query);
 		search(null,null,true);
 	}
-
 });
 
 
@@ -56,6 +54,7 @@ var sparqlendpoint="http://data.uni-muenster.de/istgtest/sparql";
 var $limit = 100;
 var sparqlresultno=0;
 var sort;
+var skip = 0;
 var sparqlPrefixes="prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> "+
 "PREFIX foaf: <http://xmlns.com/foaf/spec/#> "+
 "PREFIX luc: <http://www.ontotext.com/owlim/lucene#> "+
@@ -91,56 +90,50 @@ String.prototype.endsWith = function(str)
 {return (this.match(str+"$")==str)}
 
 function replaceURLWithHTMLLinks(text) {
-    var exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-    return text.replace(exp,"<a href='$1'>$1</a>");
+  var exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+  return text.replace(exp,"<a href='$1'>$1</a>");
 }
 
 function countProperties(obj) {
-    var count = 0;
-
-    for(var prop in obj) {
-        if(obj.hasOwnProperty(prop))
-            ++count;
-    }
-
-    return count;
+  var count = 0;
+  for(var prop in obj) {
+    if(obj.hasOwnProperty(prop)) ++count;
+  }
+  return count;
 }
 
 var reducer = function( result ) {
+	if (result.head.vars.length == 0) return undefined;
+	var firstvar = result.head.vars[0];
+	if (result.results.bindings.length == 0) return null;
 
-			if (result.head.vars.length == 0) return undefined;
-			var firstvar = result.head.vars[0];
-			if (result.results.bindings.length == 0) return null;
-
-			var reduced = {};
-			$.each(result.results.bindings, function(index, val) {
-
-					if(val[firstvar]==undefined){
-						return true;
-					}
-					var v = val[firstvar].value;
-					if (!(v in reduced)) reduced[v] = {};
-					$.each(val, function(variable, binding) {
-
-					if (variable == firstvar)
-						return true;
-					if (!(variable in reduced[v]))
-						reduced[v][variable] = [];
-					if (variable == "werkebandnr" || variable == "werketitel") reduced[v][variable].push(binding.value);
-					if ($.inArray(binding.value, reduced[v][variable]) == -1) {
-						reduced[v][variable].push(binding.value);
-					}
-				});
-			});
-			// TODO for debugging only
-			//	var x = {}; x.result = result; x.reduced = reduced; $.dump(x);
-			return reduced;
+	var reduced = {};
+	$.each(result.results.bindings, function(index, val) {
+		if(val[firstvar]==undefined){
+			return true;
+		}
+		var v = val[firstvar].value;
+		if (!(v in reduced)) reduced[v] = {};
+		$.each(val, function(variable, binding) {
+			if (variable == firstvar)
+				return true;
+			if (!(variable in reduced[v]))
+				reduced[v][variable] = [];
+			if (variable == "werkebandnr" || variable == "werketitel") reduced[v][variable].push(binding.value);
+			if ($.inArray(binding.value, reduced[v][variable]) == -1) {
+				reduced[v][variable].push(binding.value);
+			}
+		});
+	});
+	// TODO for debugging only
+	//	var x = {}; x.result = result; x.reduced = reduced; $.dump(x);
+	return reduced;
 };
 
 function getURLParameter(name) {
-    return decodeURI(
-        (RegExp(name + '=' + '(.+?)(&|$)').exec(location.search)||[,null])[1]
-    );
+  return decodeURI(
+    (RegExp(name + '=' + '(.+?)(&|$)').exec(location.search)||[,null])[1]
+  );
 }
 
 
@@ -148,13 +141,10 @@ function resultsBack(sort){
 	$('#searchbox').val(previousSearchTerm);
 	sparqlresultno=previousSparqlResultNo-100;
 	diff = overallresultno-currentresultno;
-        //overallresultno = overallresultno - diff;
+  //overallresultno = overallresultno - diff;
 	overallresultno = diff-100;
 	search(sort,previousSparqlResultNo-100);
-
 }
-
-
 
 var xhr;
 var markerArray;
@@ -177,16 +167,6 @@ function search($sort,$offset,$fireCount){
 		$(document).scrollTop( $("#searchbox").offset().top );
 	}
 	$('div#searchresults').slideDown();
-
-	//if($sort != null){
-	//	sparqlresultno=0;
-	//}
-
-	//if($sort == null){
-	//	sparqlresultno=0;
-	//	overallresultno=0;
-	//	$further=0;
-	//}
 
 	//remove whitespaces in front and at the end
 	$searchstring=$.trim($('#searchbox').val());
@@ -701,119 +681,61 @@ function search($sort,$offset,$fireCount){
 
 									//Select Icon for the type
 									figure = "<figure><img src=\"http://data.uni-muenster.de/istg/document.png\" alt=\"Unbekannter Dokumenttyp\"></figure>";
-									icon="<img src=\"http://data.uni-muenster.de/istg/document.png\" alt=\"Unbekannter Dokumenttyp\">";
-									type="";
-									console.log(json[i].typ);
+
 									if( json[i].typ != undefined){
 										if(json[i].comment && json[i].comment[0].search("Elektronische Ressource")!=-1){
-											type="Disc";
-											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/CD-ROM.png\" alt=\"CD-ROM\">";
 											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/CD-ROM.png\" alt=\"CD-ROM\"><figcaption>Disc</figcaption></figure>";
 										}else if($.inArray("Bandaufführung",json[i].type)!=-1){
-											type="Einzel-<br />band";
-											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Bandauffuehrung\">";
 											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Bandauffuehrung\"><figcaption>Einzel-<br />band</figcaption</figure>";
 										}else if($.inArray("Q", json[i].type)!=-1) {
-											type = "Buch";
-											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\">";
 											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\"><figcaption>Buch</figcaption</figure>";
 										}else if($.inArray("Zeitschriftenband",json[i].type)!=-1) {
-											type = "Zeit-<br />schriften-<br />band";
-											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschriftenband.png\" alt=\"Zeitschriftenband\">";
 											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschriftenband.png\" alt=\"Zeitschriftenband\"><figcaption>Zeit-<br />schriften-<br />band</figcaption</figure>";
 										}else if($.inArray("Zeitschrift", json[i].type)!=-1) {
-											type = "Zeitschrift";
-											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschrift.png\" alt=\"Zeitschrift\" >";
 											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschrift.png\" alt=\"Zeitschrift\" ><figcaption>Zeitschrift</figcaption</figure>";
 										}else if( $.inArray("http://purl.org/ontology/bibo/Book", json[i].typ)!=-1){
-											//icon="<img src=\"http://data.uni-muenster.de/istg/book.png\" alt=\"Buch\">";
-											type="Buch";
-											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\">";
 											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\"><figcaption>Buch</figcaption</figure>";
 										}else if($.inArray("http://purl.org/ontology/bibo/Map", json[i].typ)!=-1){
-											type="Karte";
-											icon="<img style=\"width:32px;height32px;\" src=\"http://data.uni-muenster.de/istg/images/Karten.png\" alt=\"Karte\">";
 											figure = "<figure><img style=\"width:32px;height32px;\" src=\"http://data.uni-muenster.de/istg/images/Karten.png\" alt=\"Karte\"><figcaption>Karte</figcaption</figure>";
-											//icon="<img src=\"http://data.uni-muenster.de/istg/map.png\" alt=\"Karte\">";
 										}else if($.inArray("http://purl.org/ontology/bibo/Periodical", json[i].typ)!=-1 || $.inArray("http://purl.org/ontology/bibo/MultiVolumeBook", json[i].typ)!=-1){
-											//icon="<img src=\"http://data.uni-muenster.de/istg/page_copy.png\" alt=\"Reihe\">";
-											type="mehr-<br />bändiges Werk";
-											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/mehrbaendiges%20Werk.png\" alt=\"mehrbaendiges Werk\">";
 											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/mehrbaendiges%20Werk.png\" alt=\"mehrbaendiges Werk\"><figcaption>mehr-<br />bändiges Werk</figcaption</figure>";
 										}else if( $.inArray("http://vocab.lodum.de/istg/PicturePostcard", json[i].typ)!=-1){
-											//icon="<img src=\"http://data.uni-muenster.de/istg/postcard.png\" alt=\"Ansichtskarte\">";
-											type="Ansichts-<br />karte";
-											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Ansichtskarten_2.png\" alt=\"Ansichtskarte\">";
 											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Ansichtskarten_2.png\" alt=\"Ansichtskarte\"><figcaption>Ansichts-<br />karte</figcaption</figure>";
 										}else if( $.inArray("http://vocab.lodum.de/istg/Atlas", json[i].typ)!=-1){
-											icon="<img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\">";
 											figure = "<figure><img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\"><figcaption></figcaption</figure>";
 										}else if( $.inArray("http://vocab.lodum.de/istg/Atlas", json[i].typ)!=-1){
-											icon="<img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\">";
 											figure = "<figure><img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\"><figcaption></figcaption</figure>";
 										}else if( $.inArray("http://purl.org/ontology/bibo/Excerpt", json[i].typ)!=-1){
-											type="Stadt-<br />information";
-											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Stadtinformationen.png\" alt=\"Stadtinformation\">";
 											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Stadtinformationen.png\" alt=\"Stadtinformation\"><figcaption>Stadt-<br />information</figcaption</figure>";
 										}else if( $.inArray("http://purl.org/ontology/bibo/Article", json[i].typ)!=-1){
-											type="Aufsatz";
-											icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Aufsatz.png\" alt=\"Aufsatz\">";
 											figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Aufsatz.png\" alt=\"Aufsatz\"><figcaption>Aufsatz</figcaption</figure>";
 										}else if($.inArray("http://xmlns.com/foaf/spec/#Person", json[i].typ)!=-1){
 											werke = json[i].werke;
 											if(json[i].comment && json[i].comment[0].search("Elektronische Ressource")!=-1){
-												type="Disc";
-												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/CD-ROM.png\" alt=\"CD-ROM\">";
 												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/CD-ROM.png\" alt=\"CD-ROM\"><figcaption>Disc</figcaption</figure>";
 											}else if($.inArray("Bandaufführung",json[i].type)!=-1){
-												type="Einzel-<br />band";
-												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Bandauffuehrung\">";
 												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Bandauffuehrung\"><figcaption>Einzel-<br />band</figcaption</figure>";
 											}else if($.inArray("Q", json[i].type)!=-1) {
-												type = "Q";
-												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\">";
 												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\"><figcaption>Q</figcaption</figure>";
 											}else if($.inArray("Zeitschriftenband",json[i].type)!=-1) {
-												type = "Zeit-<br />schriften-<br />band";
-												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschriftenband.png\" alt=\"Zeitschriftenband\">";
 												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschriftenband.png\" alt=\"Zeitschriftenband\"><figcaption>Zeit-<br />schriften-<br />band</figcaption</figure>";
 											}else if($.inArray("Zeitschrift", json[i].type)!=-1) {
-												type = "Zeitschrift";
-												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschrift.png\" alt=\"Zeitschrift\" >";
 												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschrift.png\" alt=\"Zeitschrift\" ><figcaption>Zeitschrift</figcaption</figure>";
 											}else if( $.inArray("http://purl.org/ontology/bibo/Book", json[i].werketyp)!=-1){
-                        //icon="<img src=\"http://data.uni-muenster.de/istg/book.png\" alt=\"Buch\">";
-												type="Buch";
-												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\">";
 												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\"><figcaption>Buch</figcaption</figure>";
                     	}else if($.inArray("http://purl.org/ontology/bibo/Map", json[i].werketyp)!=-1){
-                      	//icon="<img src=\"http://data.uni-muenster.de/istg/map.png\" alt=\"Karte\">";
-												type="Karte";
-												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Karten.png\" alt=\"Karte\">";
 												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Karten.png\" alt=\"Karte\"><figcaption>Karte</figcaption</figure>";
                     	}else if($.inArray("http://purl.org/ontology/bibo/Periodical", json[i].werketyp)!=-1 || $.inArray("http://purl.org/ontology/bibo/MultiVolumeBook", json[i].typ)!=-1){
-                       	//icon="<img src=\"http://data.uni-muenster.de/istg/page_copy.png\" alt=\"Reihe\">";
-												type="mehr-<br />bändiges Werk";
-												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/mehrbaendiges%20Werk.png\" alt=\"mehrbaendiges Werk\">";
 												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/mehrbaendiges%20Werk.png\" alt=\"mehrbaendiges Werk\"><figcaption>mehr-<br />bändiges Werk</figcaption</figure>";
                       }else if( $.inArray("http://vocab.lodum.de/istg/PicturePostcard", json[i].werketyp)!=-1){
-                       	//icon="<img src=\"http://data.uni-muenster.de/istg/postcard.png\" alt=\"Ansichtskarte\">";
-												type="Ansichts-<br />karte";
-												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Ansichtskarten_2.png\" alt=\"Ansichtskarte\">";
 												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Ansichtskarten_2.png\" alt=\"Ansichtskarte\"><figcaption>Ansichts-<br />karte</figcaption</figure>";
                     	}else if( $.inArray("http://vocab.lodum.de/istg/Atlas", json[i].werketyp)!=-1){
-                        icon="<img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\">";
                         figure = "<figure><img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\"><figcaption></figcaption</figure>";
                     	}else if( $.inArray("http://vocab.lodum.de/istg/Atlas", json[i].werketyp)!=-1){
-                        icon="<img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\">";
                         figure = "<figure><img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\"><figcaption></figcaption</figure>";
                     	}else if( $.inArray("http://purl.org/ontology/bibo/Excerpt", json[i].typ)!=-1){
-												type="Stadt-&nbspinformation"
-												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Stadtinformationen.png\" alt=\"Stadtinformation\">";
 												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Stadtinformationen.png\" alt=\"Stadtinformation\"><figcaption>Stadt-&nbspinformation</figcaption</figure>";
 											}else if( $.inArray("http://purl.org/ontology/bibo/Article", json[i].typ)!=-1){
-												type="Aufsatz";
-												icon="<img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Aufsatz.png\" alt=\"Aufsatz\">";
 												figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Aufsatz.png\" alt=\"Aufsatz\"><figcaption>Aufsatz</figcaption</figure>";
 											}
 										}
@@ -840,17 +762,9 @@ function search($sort,$offset,$fireCount){
 										+"<a name=\""+i.hashCode()+"\"></a><div style=\"padding-left:90px;\"><a href=\"javascript:showProperties('"+i+"','"+j+"','true')\"><span class=\"stringresult\">" + title+ "</span></a>"
 										+"</span><br/><span style=\"font-size:9px;\">"+subtitle+"</span></div></div><div class=\"properties\" id=\"properties_"+j+"\" style=\"float:left;\" ></div></div>");
 									}
-
-									//$("#searchresults").append("<div style=\"border:1px solid #cac9d0;padding:1em;width:700px;min-height:50px;margin-top:20px;\" class='searchresult' id='result_"+j+"_outer' >"
-									//+"<div id='result_"+i+"'><div style=\"width:32px;height:32px;float:left;\">"+icon+"</div>"
-									//+"<a name=\""+i.hashCode()+"\"></a><a href=\"javascript:showProperties('"+i+"','"+j+"','true')\"><span class=\"stringresult\">" + title+ "</span></a>"
-									//+" &nbsp;<a  class='rawdata' target='_blank' title='Raw data for this URI' href='" + i + "'>&rarr;</a></span><br/><span style=\"font-size:9px;\">"+subtitle+"</span></div><div id=\"properties_"+j+"\" style=\"float:left;\" ></div><p style=\"clear:both;\"></p></div><p style=\"clear:both;\"></p> ");
 								}) //end each json
 
-								//$("#searchResultCount").text("Suchergebnisse ("+searchCount+")");
-
-								if($offset!=null && $offset!="" && $offset!=0){
-
+								if($offset != null && $offset != "" && $offset != 0){
 									previousSparqlOffset=$offset;
 									$further=$offset+$limit;
 								}else{
@@ -872,7 +786,6 @@ function search($sort,$offset,$fireCount){
 								console.log("SPARQLRESULTNO: "+sparqlresultno);
 								console.log("FURTHER: "+$further);
 								console.log("PREVIOUS: "+previousSparqlOffset);
-								//TODO Anzahl überprüfen, wenn trefferzahl kleiner 100 dann nichts anzeigen
 
 								//if(sparqlresultno==$further){
 								if(currentresultno > 98){
@@ -881,41 +794,26 @@ function search($sort,$offset,$fireCount){
 									} else {
 										sort = "'"+$sort+"'";
 									}
-									(back) ? backHTML="<a disabled="+'"<%= bit>"'+" href=\"javascript:resultsBack("+sort+")\"><< vorherige Ergebnisse</a> |"+(overallresultno-currentresultno)+"-"+overallresultno+"| " : backHTML="|1-"+overallresultno+"|";
-									moreresults="<span style=\"float:left;\" class=\"moresearchresults\">"+backHTML+" <a href=\"javascript:search("+sort+","+sparqlresultno+",false)\">weitere Ergebnisse >></a></span>";
+									(back) ? backHTML="<a disabled="+'"<%= bit>"'+" href=\"javascript:search("+sort+",0,false)\"><< </a><a disabled="+'"<%= bit>"'+" href=\"javascript:resultsBack("+sort+")\">< vorherige Ergebnisse</a> |"+(overallresultno-currentresultno)+"-"+overallresultno+"| " : backHTML="|1-"+overallresultno+"|";
+									moreresults="<span style=\"float:left;\" class=\"moresearchresults\">"+backHTML+" <a href=\"javascript:search("+sort+","+sparqlresultno+",false)\">weitere Ergebnisse ></a><a href=\"javascript:search("+sort+","+skip+",false)\"> >></a></span>";
 									$("#searchresults").prepend(moreresults);
-									moreresults="<span style=\"float:left;margin-bottom:60px;\" class=\"moresearchresults\">"+backHTML+" <a href=\"javascript:search("+sort+","+sparqlresultno+",false)\">weitere Ergebnisse >></a></span>";
+									moreresults="<span style=\"float:left;margin-bottom:60px;\" class=\"moresearchresults\">"+backHTML+" <a href=\"javascript:search("+sort+","+sparqlresultno+",false)\">weitere Ergebnisse ></a><a href=\"javascript:search("+sort+","+skip+",false)\"> >></a></span>";
 									$("#searchresults").append(moreresults);
 								} else {
-									(back) ? backHTML="<a style=\"float:left;\" href=\"javascript:resultsBack("+sort+")\"><< vorherige Ergebnisse</a> |"+(overallresultno-currentresultno)+"-"+overallresultno+"| " : backHTML="";
+									(back) ? backHTML="<a style=\"float:left;\" href=\"javascript:search("+sort+",0,false)\"><< </a><a style=\"float:left;\" href=\"javascript:resultsBack("+sort+")\">< vorherige Ergebnisse</a> |"+(overallresultno-currentresultno)+"-"+overallresultno+"| " : backHTML="";
 									moreresults="<span class=\"moresearchresults\">"+backHTML;
 									$("#searchresults").prepend(moreresults);
-									//$("#searchresults").append(moreresults);
 								}
-								//}else if(sparqlresultno > previousSparqlOffset && sparqlresultno < $further){
-								//	(back) ? backHTML="<a style=\"float:left;\" href=\"javascript:resultsBack("+sort+")\"><< vorherige Ergebnisse</a> |"+(overallresultno-currentresultno)+"-"+overallresultno+"| " : backHTML="";
-								//	moreresults="<span class=\"moresearchresults\">"+backHTML;
-								//	$("#searchresults").prepend(moreresults);
-								//	$("#searchresults").append(moreresults);
-								//}
-
 							}else{
-									$("#map").hide();
-									$("#searchresults").append("<div class='error'>Diese Anfrage lieferte keinen Treffer! Bitte prüfen Sie die Schreibweise und versuchen Sie es erneut!</div>");
-									//$("#searchresults").append("<div class='error'>Ihre Suchanfrage erzielte leider keine Treffer. Bitte variieren oder spezifizieren Sie Ihre Suchworte und lockern Sie ggf. die Einschränkungen in der <span onclick=\"javascript:toggleItemList('#expertensuche');\" style=\"cursor: pointer;padding-top:0.5em;\">\"&raquo;Expertensuche\".</span></div>");
-
-
+								$("#map").hide();
+								$("#searchresults").append("<div class='error'>Diese Anfrage lieferte keinen Treffer! Bitte prüfen Sie die Schreibweise und versuchen Sie es erneut!</div>");
 							}
-
-
 
 							//highlight searchterms
 							keywords=$.trim($("#searchbox").val()).split(" ");
 							$.each(keywords, function(key,value){
 								highlightKeywords(value);
 							});
-
-
 
 							if(!$.isEmptyObject( markerArray )){
 								$("#map").show();
@@ -990,19 +888,22 @@ function getSearchResults(searchstring,restriction,typeRestriction,typeRestricti
 	"}";
 	console.log(request.query);
 	searchresult = $.ajax({
-        	beforeSend: function(xhrObj){
-                	xhrObj.setRequestHeader("Accept","application/sparql-results+json");
-                },
-                url: sparqlendpoint,
-                type: "POST",
-                dataType: "json",
-                data: request,
-                timeout:90000,
-                success: function(json, status, jqXHR){
+    beforeSend: function(xhrObj){
+     	xhrObj.setRequestHeader("Accept","application/sparql-results+json");
+    },
+    url: sparqlendpoint,
+    type: "POST",
+    dataType: "json",
+    data: request,
+    timeout:90000,
+    success: function(json, status, jqXHR){
 			$("#searchResultCount").text("Suchergebnisse ("+json.results.bindings[0].counter.value+")");
+			var resultCount = json.results.bindings[0].counter.value.toString();
+			var lastTwoDigits = parseInt(resultCount.slice(-2));
+			skip = json.results.bindings[0].counter.value - lastTwoDigits;
+			console.log("SKIP: "+skip);
 		}
 	});
-
 }
 
 
