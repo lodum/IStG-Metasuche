@@ -53,6 +53,7 @@ var $limit = 100;
 var sparqlresultno=0;
 var sort;
 var skip = 0;
+var results;
 var sparqlPrefixes="prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> "+
 "PREFIX foaf: <http://xmlns.com/foaf/spec/#> "+
 "PREFIX luc: <http://www.ontotext.com/owlim/lucene#> "+
@@ -134,14 +135,6 @@ function getURLParameter(name) {
   );
 }
 
-
-function resultsBack(sort){
-	$('#searchbox').val(previousSearchTerm);
-	sparqlresultno=previousSparqlResultNo-100;
-	diff = overallresultno-currentresultno;
-	search(sort,overallresultno-diff-100);
-}
-
 var xhr;
 var markerArray;
 var titleArray;
@@ -158,7 +151,6 @@ var overallresultno=0;
 var stringSimilarity="~0.9 ";
 var reducedjson;
 function search($sort,$offset,$fireCount){
-	console.log($sort);
 	if($offset){
 		$(document).scrollTop( $("#searchbox").offset().top );
 	}
@@ -449,31 +441,14 @@ function search($sort,$offset,$fireCount){
 
 		//+" }"+ $sorting +" LIMIT "+ $limit +off;
 
-		console.log(request.query);
+		// console.log(request.query);
 
-		if(xhr){ //cancel previous request
-			xhr.abort();
-		}
-
-		if($fireCount){
-			//console.log("fireCount");
-			getSearchResults($searchstring,restrict,typeRestriction,typeRestriction2);
-		} else {
-		//NEW QUERY//
-		var graph = "";
-		if($('#expertensuche input[name=type]:checkbox:checked').val() == "http://vocab.lodum.de/istg/PicturePostcard"){
-			graph = "<http://data.uni-muenster.de/context/istg/ansichtskarten>"
-		} else if($('#expertensuche input[name=type]:checkbox:checked').val() == "http://purl.org/ontology/bibo/Map"){
-			graph = "<http://data.uni-muenster.de/context/istg/karten>"
-		} else if($('#expertensuche input[name=type]:checkbox:checked').val() == "http://vocab.lodum.de/istg/WrittenResource"){
-			graph = "<http://data.uni-muenster.de/context/istg/allegro>"
-    } else if($('#expertensuche input[name=type]:checkbox:checked').val() == "http://purl.org/ontology/bibo/Excerpt"){
-			graph = "<http://data.uni-muenster.de/context/istg/stadtinformationen>"
-    }
-		}
+		// if(xhr){ //cancel previous request
+		// 	xhr.abort();
+		// }
 
 		//Query
-		query = '*:*';
+		query = 'dct\\:title:"'+$.trim($('#searchbox').val())+'"~0.9';
 
 		//FILTER
 		fq = "";
@@ -486,6 +461,9 @@ function search($sort,$offset,$fireCount){
 				} else {
 					fq += ' OR "'+checkedTypes[index].value + '"';
 				}
+			} else {
+				//filter out persons
+				fq += 'rdf\\:type:(-"http://xmlns.com/foaf/spec/#Person"';
 			}
 		});
 		if (fq !== "") {
@@ -493,24 +471,41 @@ function search($sort,$offset,$fireCount){
 		}
 
 		//Sort
+		sort = 'dct\:title asc';
 
 		//Start & rows
+		start = ($offset !== null ? $offset : 0);
+		rows = 100;
 
 		//Build URL
-		url = "http://gin-isdg.uni-muenster.de:8983/solr/collection1/select?q=" + encodeURIComponent(query) + "&fq=" + encodeURIComponent(fq) + "&rows=100&wt=json&indent=true&json.wrf=?";
+		url = "http://gin-isdg.uni-muenster.de:8983/solr/collection1/select?q=" + encodeURIComponent(query) + "&fq=" + encodeURIComponent(fq) + "&sort=" + encodeURIComponent(sort) + "&start="+start+"&rows="+rows+"&wt=json&indent=true&json.wrf=?";
 		$.getJSON(url)
 			.done( function ( data ) {
 				$('.error').remove();
 				$('.searchresult').remove();
 				$("#ajaxloader").hide();
 				$("#suche").removeClass('hide').addClass('show');
+				totalResults = data.response.numFound;
+				$("#searchResultCount").text("Suchergebnisse ("+totalResults+")");
+				$("#sortierung").slideDown();
 				results = data.response.docs;
-				console.log(results);
+				lastTwoDigits = parseInt(totalResults.toString().slice(-2));
+				skip = totalResults - lastTwoDigits;
+				next = (results.length < 100 ? results.length : 100);
+
+				(back) ? backHTML="<a disabled="+'"<%= bit>"'+" href=\"javascript:search("+sort+",0,false)\"><<&nbsp;</a><a disabled="+'"<%= bit>"'+" href=\"javascript:search("+sort+","+(start-100)+",false)\">< vorherige Ergebnisse</a> |"+(start+1)+"-"+(start+next)+"| " : backHTML="|1-"+rows+"|";
+				forwardHTML = (next == 100 ? "<a href=\"javascript:search("+sort+","+(start+100)+",false)\">weitere Ergebnisse ></a><a href=\"javascript:search("+sort+","+skip+",false)\"> >></a>" : "");
+				moreresults="<span style=\"float:left;\" class=\"moresearchresults\"> "+backHTML+" "+forwardHTML+" </span>";
+				$("#searchresults").prepend(moreresults);
+
 				$.each(results, function (index,value) {
+					title = (results[index]["dct:title"] !== undefined ? results[index]["dct:title"] : "unknown");
+					subtitle = (results[index]["istg:subtitle"] !== undefined ? results[index]["istg:subtitle"] : "");
+
 					$("#searchresults").append("<div style=\"float:left; border:1px solid #cac9d0;padding:1em;min-height:70px;margin-top:20px;\" class='searchresult' id='result_"+index+"_outer' >"
-					+"<div class=\"title\" id='result_"+index+"'><div style=\"width:50px;height:32px;float:left;text-align:center;font-size:9px;\"><div class=\"count\">"+(index+1)+". </div><div class=\"icon\">"+getIcon(results[index]["rdf:type"], results[index]["istg:type"])+"</div></div>"
-					+"<div style=\"padding-left:90px;\"><a  href=\"javascript:showProperties('"+results[index].id+"','"+index+"','true')\"><span class=\"stringresult\">" + results[index]["dct:title"]+ "</span></a>"
-					+"</span><br/><span style=\"font-size:9px;\">"+results[index]["istg:subtitle"]+"</span></div></div><div class=\"properties\" id=\"properties_"+index+"\" style=\"float:left;\" ></div></div>");
+					+"<div class=\"title\" id='result_"+index+"'><div style=\"width:50px;height:32px;float:left;text-align:center;font-size:9px;\"><div class=\"count\">"+(index+1+start)+". </div><div class=\"icon\">"+getIcon(results[index]["rdf:type"], results[index]["istg:type"])+"</div></div>"
+					+"<div style=\"padding-left:90px;\"><a  href=\"javascript:showProperties('"+results[index].id+"','"+index+"','true')\"><span class=\"stringresult\">" + title + "</span></a>"
+					+"</span><br/><span style=\"font-size:9px;\">"+ subtitle +"</span></div></div><div class=\"properties\" id=\"properties_"+index+"\" style=\"float:left;\" ></div></div>");
 				});
 			})
 			.fail( function ( jqxhr, textStatus, error) {
@@ -872,6 +867,7 @@ $(function() {
  });
 
 function loadAndAppendPropertiesToElement(uri,element,highlight){
+	console.log(results);
 	var request = { accept : 'application/sparql-results+json' };
 	request.query = sparqlPrefixes+"SELECT ?y ?z ?label ?sort ?werke ?werketitel ?werkebandnr ?contributorName ?seriesNumber ?publisherName ?issueName ?signature ?collection ?creatorName ?placeName ?countryName (CONCAT(?cartographerFN, ' ' ,?cartographerLN) AS ?cartographer) ?editorName ?article ?mapType ?histPlaceName ?category ?authorName ?cityName ?regionName ?cityName ?continentName ?technicName ?organizationName ?partOfDesc ?partOf ?partOf2 WHERE {"
 	+"<"+uri+"> ?y ?z.?y <http://www.w3.org/2000/01/rdf-schema#label> ?label."
