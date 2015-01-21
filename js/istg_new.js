@@ -385,68 +385,6 @@ function search($sort,$offset,$fireCount){
 			$("#searchRestrictions").html("");
 		}
 
-		/* build final query*/
-		request.query = sparqlPrefixes+
-		"SELECT DISTINCT ?x ?werke ?werketyp ?title ?title1 ?typ ?type ?comment ?longlat ?score ((?weight + xsd:decimal(?score)) as ?ls) "+
-		"WHERE {  "+
-		"{"+$searchstring+ty
-		+"?x istg:icon ?typ."
-		+"OPTIONAL{?y istg:importance ?weight}."
-		+restrict+typeRestriction
-		+"Optional{?x dct:title ?title}."
-		//+"Optional{?x istg:maintitle ?title} ."
-		//+"Optional{?x dct:title ?title} ."
-		+"Optional{?x istg:subtitle ?title1} ."
-		+"Optional{?x dct:issued ?issued}."
-		+"Optional{?x rdfs:comment ?comment}."
-		+"Optional{?x istg:type ?type}."
-		//+"OPTIONAL{?x istg:themeLocation ?location. ?location wgs84:lat ?lat. ?location wgs84:long ?long.BIND(concat(concat(str(?long),','),str(?lat)) as ?longlat).}."
-    +"OPTIONAL{?x istg:themeLocation ?location. ?location geo-pos:lat ?lat. ?location geo-pos:long ?long.BIND(concat(concat(str(?long),','),str(?lat)) as ?longlat).}."+"}"+
-    //x"UNION { "+$searchstring+ty+restrict
-		//x+"OPTIONAL{?y istg:importance ?weight}."
-    //x+"FILTER (EXISTS{?x rdf:type foaf:Person})."
-    //x+"?werke dc:creator ?x ."
-		//x+"OPTIONAL{?werke istg:icon ?typ}."
-    //x+"OPTIONAL{?werke istg:cartographer ?x}."
-    //x+"OPTIONAL{?werke dc:contributor ?x}."
-    //x+"OPTIONAL{?werke dct:publisher ?x}."
-    //x+"OPTIONAL{?werke bibo:editor ?x}."
-    //x+"OPTIONAL{?werke dct:contributor ?x}."
-		//+"OPTIONAL{?werke rdf:type ?werketyp}."
-    //x+typeRestriction2
-		//x+"Optional{?werke dct:title ?title}."
-		//+"Optional{?werke istg:maintitle ?title} ."
-		//+"Optional{?werke dct:title ?title} ."
-		//x+"Optional{?werke istg:subtitle ?title1} ."
-		//x+"Optional{?werke dct:issued ?issued}."
-		//x+"Optional{?werke rdfs:comment ?comment}."
-		//x+"Optional{?werke istg:type ?type}."
-		//+"OPTIONAL{?werke istg:themeLocation ?location. ?location wgs84:lat ?lat. ?location wgs84:long ?long.BIND(concat(concat(str(?long),','),str(?lat)) as ?longlat).}."
-    //x+"OPTIONAL{?werke istg:themeLocation ?location. ?location geo-pos:lat ?lat. ?location geo-pos:long ?long.BIND(concat(concat(str(?long),','),str(?lat)) as ?longlat).}."+"}"
-
-		" }" +"ORDER BY "+ $sorting + " LIMIT "+ $limit +off;
-
-		/*OLD build final query*/
-		//request.query = sparqlPrefixes+
-		//"SELECT DISTINCT ?x ?title ?title1 ?typ ?longlat "+
-		//"WHERE {  "+
-		//$searchstring+ty
-		//+"Optional{?x istg:maintitle ?title} ."
-		//+"Optional{?x dct:title ?title} ."
-		//+"Optional{?x istg:subtitle ?title1} ."
-		//+"Optional{?x dct:issued ?issued}."
-		//+"OPTIONAL{?x istg:themeLocation ?location. ?location wgs84:lat ?lat. ?location wgs84:long ?long.BIND(concat(concat(str(?long),','),str(?lat)) as ?longlat).}."
-
-                //+"OPTIONAL{?x istg:themeLocation ?location. ?location geo-pos:lat ?lat. ?location geo-pos:long ?long.BIND(concat(concat(str(?long),','),str(?lat)) as ?longlat).}."
-
-		//+" }"+ $sorting +" LIMIT "+ $limit +off;
-
-		// console.log(request.query);
-
-		// if(xhr){ //cancel previous request
-		// 	xhr.abort();
-		// }
-
 		//Query
 		query = 'dct\\:title:"'+$.trim($('#searchbox').val())+'"~0.9';
 
@@ -493,10 +431,13 @@ function search($sort,$offset,$fireCount){
 				skip = totalResults - lastTwoDigits;
 				next = (results.length < 100 ? results.length : 100);
 
-				(back) ? backHTML="<a disabled="+'"<%= bit>"'+" href=\"javascript:search("+sort+",0,false)\"><<&nbsp;</a><a disabled="+'"<%= bit>"'+" href=\"javascript:search("+sort+","+(start-100)+",false)\">< vorherige Ergebnisse</a> |"+(start+1)+"-"+(start+next)+"| " : backHTML="|1-"+rows+"|";
-				forwardHTML = (next == 100 ? "<a href=\"javascript:search("+sort+","+(start+100)+",false)\">weitere Ergebnisse ></a><a href=\"javascript:search("+sort+","+skip+",false)\"> >></a>" : "");
-				moreresults="<span style=\"float:left;\" class=\"moresearchresults\"> "+backHTML+" "+forwardHTML+" </span>";
-				$("#searchresults").prepend(moreresults);
+				//only show pagination if totalresults is bigger than 100
+				if (totalResults > 100) {
+					(back) ? backHTML="<a disabled="+'"<%= bit>"'+" href=\"javascript:search("+sort+",0,false)\"><<&nbsp;</a><a disabled="+'"<%= bit>"'+" href=\"javascript:search("+sort+","+(start-100)+",false)\">< vorherige Ergebnisse</a> |"+(start+1)+"-"+(start+next)+"| " : backHTML="|1-"+rows+"|";
+					forwardHTML = (next == 100 ? "<a href=\"javascript:search("+sort+","+(start+100)+",false)\">weitere Ergebnisse ></a><a href=\"javascript:search("+sort+","+skip+",false)\"> >></a>" : "");
+					moreresults="<span style=\"float:left;\" class=\"moresearchresults\"> "+backHTML+" "+forwardHTML+" </span>";
+					$("#searchresults").prepend(moreresults);
+				}
 
 				$.each(results, function (index,value) {
 					title = (results[index]["dct:title"] !== undefined ? results[index]["dct:title"] : "unknown");
@@ -771,42 +712,6 @@ function search($sort,$offset,$fireCount){
 
 var searchresults;
 
-function getSearchResults(searchstring,restriction,typeRestriction,typeRestriction2){
-	var request = { accept : 'application/sparql-results+json' };
-	request.query = sparqlPrefixes+
-	"SELECT DISTINCT (COUNT(DISTINCT ?x) AS ?counter)"+
-	"WHERE{ {"+searchstring+
-    	"?x ?y ?s."+
-	"?x istg:icon ?typ."+
-    	typeRestriction+"}"+
-	//"UNION {"+ searchstring+
-    	//"?x ?y ?s."+
-    	//"?werke dc:creator ?x ."+
-    	//"FILTER(EXISTS{?x rdf:type foaf:Person})."+
-    	//typeRestriction2+
-    	//"}"+
-	"}";
-	console.log(request.query);
-	// searchresult = $.ajax({
- //    beforeSend: function(xhrObj){
- //     	xhrObj.setRequestHeader("Accept","application/sparql-results+json");
- //    },
- //    url: sparqlendpoint,
- //    type: "POST",
- //    dataType: "json",
- //    data: request,
- //    timeout:90000,
- //    success: function(json, status, jqXHR){
-	// 		$("#searchResultCount").text("Suchergebnisse ("+json.results.bindings[0].counter.value+")");
-	// 		var resultCount = json.results.bindings[0].counter.value.toString();
-	// 		var lastTwoDigits = parseInt(resultCount.slice(-2));
-	// 		skip = json.results.bindings[0].counter.value - lastTwoDigits;
-	// 		console.log("SKIP: "+skip);
-	// 	}
-	// });
-}
-
-
 var popUp;
 var lastVisitedLinks = [];
 function showPartOfDetails(uri,invokedBy){
@@ -866,379 +771,512 @@ $(function() {
 	$(".ui-dialog").appendTo("#istg_main_wrapper").zIndex(1001);
  });
 
-function loadAndAppendPropertiesToElement(uri,element,highlight){
-	console.log(results);
-	var request = { accept : 'application/sparql-results+json' };
-	request.query = sparqlPrefixes+"SELECT ?y ?z ?label ?sort ?werke ?werketitel ?werkebandnr ?contributorName ?seriesNumber ?publisherName ?issueName ?signature ?collection ?creatorName ?placeName ?countryName (CONCAT(?cartographerFN, ' ' ,?cartographerLN) AS ?cartographer) ?editorName ?article ?mapType ?histPlaceName ?category ?authorName ?cityName ?regionName ?cityName ?continentName ?technicName ?organizationName ?partOfDesc ?partOf ?partOf2 WHERE {"
-	+"<"+uri+"> ?y ?z.?y <http://www.w3.org/2000/01/rdf-schema#label> ?label."
-	+"OPTIONAL{?y <http://vocab.lodum.de/istg/displaySort> ?sort}."
-	//+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfDesc}."
-	//+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfDesc.?partOf dct:isPartOf ?partPartOf. ?partPartOf dct:issued ?partOfIssued.BIND(CONCAT(?partOfDesc,' (',str(?partOfIssued),')') AS ?partOfDesc)}."
-	//+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfDesc.?partOf dct:issued ?partOfIssued.BIND(CONCAT(?partOfDesc,' (',str(?partOfIssued),')') AS ?partOfDesc)}."
-	/*+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfTitle.?partOf istg:authorString ?partOfAuthorName. BIND(CONCAT(?partOfAuthorName,':','<i>',str(?partOfTitle),'</i>') AS ?partOfDesc)}."
-		+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfTitle.?partOf istg:editorString ?partOfEditorName. BIND(CONCAT(?partOfEditorName,'(Hrsg.):','<i>',str(?partOfTitle),'</i>') AS ?partOfDesc)}."
-		+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf.?partOf dct:issued ?partOfIssued. ?partOf dct:title ?partOfTitle.?partOf istg:authorString ?partOfAuthorName. BIND(CONCAT(?partOfAuthorName,'(',str(?partOfIssued),'):','<i>',str(?partOfTitle),'</i>') AS ?partOfDesc)}."
-		+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf.?partOf dct:issued ?partOfIssued. ?partOf dct:title ?partOfTitle.?partOf istg:editorString ?partOfEditorName. BIND(CONCAT(?partOfEditorName,'(Hrsg.)(',str(?partOfIssued),'):','<i>',str(?partOfTitle),'</i>') AS ?partOfDesc)}."
-		//einzelwerk ist teil von aufsatz und aufsatz von gesamtwerk
-		+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf.?partOf dct:issued ?partOfIssued. ?partOf dct:title ?partOfTitle.?partOf istg:authorString ?partOfAuthorName. ?partOf dct:isPartOf ?partPartOf. ?partPartOf dct:title ?partPartOfTitle.?partPartOf istg:editorString ?partPartOfEditorName. BIND(CONCAT(?partOfAuthorName,'(',str(?partOfIssued),'):','<i>',str(?partOfTitle),'</i><br/> in ',?partPartOfEditorName,'(Hrsg.)::<i>',?partPartOfTitle,'</i>') AS ?partOfDesc)}."
-		+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfTitle.?partOf istg:authorString ?partOfAuthorName. ?partOf dct:isPartOf ?partPartOf. ?partPartOf dct:title ?partPartOfTitle.?partPartOf istg:editorString ?partPartOfEditorName. BIND(CONCAT(?partOfAuthorName,':','<i>',str(?partOfTitle),'</i><br/> in ',?partPartOfEditorName,'(Hrsg.):<i>',?partPartOfTitle,'</i>') AS ?partOfDesc)}."
-		+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfTitle.?partOf istg:authorString ?partOfAuthorName. ?partOf dct:isPartOf ?partPartOf. ?partPartOf dct:title ?partPartOfTitle.?partPartOf istg:editorString ?partPartOfEditorName.?partPartOf dct:issued ?partPartOfIssued. BIND(CONCAT(?partOfAuthorName,':','<i>',str(?partOfTitle),'</i><br/> in ',?partPartOfEditorName,'(Hrsg.)(',str(?partPartOfIssued),'):<i>',?partPartOfTitle,'</i>') AS ?partOfDesc)}."
-	*/
-	//+"OPTIONAL{<"+uri+"> istg:technic ?technic. ?technic foaf:name ?technicName}."
-	//+"OPTIONAL{<"+uri+"> istg:historicalLocation ?histLoc. ?histLoc gn:name ?histLocName}."
-	//+"OPTIONAL{<"+uri+"> bibo:editor ?publisher. ?publisher foaf:name ?editorName}."
-	//+"OPTIONAL{<"+uri+"> istg:cartographer ?cartographer. ?cartographer <http://xmlns.com/foaf/0.1/family_name> ?cartographerName}."
-  //+"OPTIONAL{<"+uri+"> istg:city ?city. ?city gn:name ?cityName}."
-	//+"OPTIONAL{<"+uri+"> istg:region ?region. ?region gn:name ?regionName}."
-	//+"OPTIONAL{<"+uri+"> istg:state ?state. ?state gn:name ?stateName}."
-	//+"OPTIONAL{<"+uri+"> istg:country ?country. ?country gn:name ?countryName}."
-	//+"OPTIONAL{<"+uri+"> istg:continent ?continent. ?continent gn:name ?continentName}."
-	//+"OPTIONAL{<"+uri+"> <http://purl.org/ontology/bibo/editorlist> ?eList.?eList <http://www.w3.org/2000/01/rdf-schema#member> ?eListMember.?eListMember <http://xmlns.com/foaf/0.1/name> ?editorName.}."
-	//+"OPTIONAL{<"+uri+"> bibo:editor ?editor.?editor foaf:name ?editorName.}."
-	+"OPTIONAL{<"+uri+"> dct:isPartOf ?edited. ?edited dct:isPartOf ?partOf2}."
-  +"OPTIONAL{<"+uri+"> dct:isPartOf ?editedBookObj. ?editedBookObj a bibo:EditedBook. ?editedBookObj istg:signature ?signature }."
-	+"OPTIONAL{?werke dct:isPartOf <"+uri+">. ?werke dct:title ?werketitel. ?werke bibo:volume ?werkebandnr. }."
-  //+"OPTIONAL{<"+uri+"> dct:isPartOf ?collectionObj. ?collectionObj a bibo:Collection. ?collectionObj dct:title ?collection }."
-  +"OPTIONAL{<"+uri+"> istg:themeLocation ?placeObj. ?placeObj gn:name ?placeName }."
-  +"OPTIONAL{<"+uri+"> bibo:editor ?publisher. ?publisher foaf:name ?editorName}."
-	+"OPTIONAL{<"+uri+"> dct:contributor ?contributor. ?contributor foaf:name ?contributorName}."
-	+"OPTIONAL{<"+uri+"> dct:isPartOf ?issueObj. ?issueObj dct:title ?issueName }."
-	+"OPTIONAL{<"+uri+"> dc:creator ?creatorObj. ?creatorObj foaf:name ?creatorName }."
-	+"OPTIONAL{<"+uri+"> istg:publishingOrganization ?verlagObj. ?verlagObj a foaf:Organization. ?verlagObj foaf:name ?organizationName}."
-	//+"OPTIONAL{<"+uri+"> dct:isPartOf ?verlagObj. ?verlagObj a foaf:Organization. ?verlagObj foaf:name ?organizationName}."
-	+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfDesc}."
-	+"OPTIONAL{<"+uri+"> istg:continent ?continentObj. ?continentObj dbpedia-prop:commonName ?continentName}."
-	+"OPTIONAL{<"+uri+"> istg:city ?cityObj. ?cityObj dbpedia-prop:commonName ?cityName}."
-  +"OPTIONAL{<"+uri+"> istg:region ?regionObj. ?regionObj rdf:description ?regionName }."
-	+"OPTIONAL{<"+uri+"> istg:country ?countryObj. ?countryObj dbpedia-prop:commonName ?countryName }."
-	+"OPTIONAL{<"+uri+"> istg:mapType ?mapTypeObj. ?mapTypeObj skos:prefLabel ?mapType }."
-	+"OPTIONAL{<"+uri+"> istg:cartographer ?cartographerObj. ?cartographerObj foaf:lastName ?cartographerLN. }."
-	+"OPTIONAL{<"+uri+"> istg:cartographer ?cartographerObj. ?cartographerObj foaf:firstName ?cartographerFN. }."
-	//+"OPTIONAL{<"+uri+"> dct:isPartOf  ?articleObj. ?articleObj a bibo:Article. ?articleObj istg:maintitle ?article }."
-	+"OPTIONAL{<"+uri+"> istg:historicPlace ?histPlaceObj. ?histPlaceObj istg:historicPlaceName ?histPlaceName }."
-	+"OPTIONAL{<"+uri+"> istg:category ?categoryObj. ?categoryObj rdfs:label ?category }."
-	+"OPTIONAL{<"+uri+"> dct:creator ?authorObj. ?authorObj foaf:name ?authorName }."
-	+"OPTIONAL{<"+uri+"> istg:relief ?seriesNumber}."
-	+"}"
-	+"ORDER BY ASC(?sort)";
+function loadAndAppendPropertiesToElement(uri,id,element,highlight){
+	var properties='<table id=\"proptable\" align=\"left\" style=\"font-size:10px;text-align:left;\">';
+	var resultArr = [];
+	var files = [];
 
-	console.log(request.query);
-
-	if(xhr){ //cancel previous request
-		xhr.abort();
-	}
-	$.ajax({
-		beforeSend: function(xhrObj){
-	    xhrObj.setRequestHeader("Accept","application/sparql-results+json");
-	  },
-		url: sparqlendpoint,
-		type: "POST",
-		dataType: "json",
-		data: request,
-		success: function(json){
-			var properties='<table id=\"proptable\" align=\"left\" style=\"font-size:10px;text-align:left;\">';
-			console.log("before reduce loadandappend");
-			console.log(json);
-			count=0;
-			json=reducer(json);
-			console.log("===after reducer===");
-      console.log(json);
-			var predicatObjectArray = [];
-			var objectContainsArray = [];
-			//objectContains = [];
-			var werkeVorhanden = false;
-			$.each(json, function(i){
-				predicate=i;
-				label=json[i].label[0];
-				//object=json[i].z[0];
-				object=json[i].z.join(";");
-				sortIndex=json[i].sort[0];
-				var werkzusatz = ""
-				if(!werkeVorhanden){
-					if(json[i].werke != undefined && (json[i].werketitel != undefined)){
-						werkeVorhanden = true;
-						var werke = json[i].werke;
-						var werkeSort = [];
-						objectContainsArray["label"]="enthält";
-						$.each(werke, function(j){
-							var tempWerk = [];
-							var bandnr = (json[i].werkebandnr[j] != undefined) ? json[i].werkebandnr[j] : json[i].werkebandnr[j-1];
-							tempWerk.push(bandnr);
-							console.log("bandnr: "+bandnr);
-							if(json[i].werketitel[j] != undefined){
-								if(werkzusatz == ""){
-									werkzusatz="<a href=\"javascript:showPartOfDetails('"+werke[j]+"');\">"+json[i].werketitel[j]+"</a> ("+bandnr+")";
-									tempWerk.push(werkzusatz);
-								}else{
-									werkzusatz=werkzusatz +"<br>"+ "<a href=\"javascript:showPartOfDetails('"+werke[j]+"');\">"+json[i].werketitel[j]+"</a> ("+bandnr+")";
-									werkzusatz2="<a href=\"javascript:showPartOfDetails('"+werke[j]+"');\">"+json[i].werketitel[j]+"</a> ("+bandnr+")";
-									tempWerk.push(werkzusatz2);
-								}
-							}else if(json[i].werketitel[j-1] != undefined){
-								werkzusatz=werkzusatz +"<br>"+ "<a href=\"javascript:showPartOfDetails('"+werke[j]+"');\">"+json[i].werketitel[j-1]+"</a> ("+bandnr+")";
-								werkzusatz2="<a href=\"javascript:showPartOfDetails('"+werke[j]+"');\">"+json[i].werketitel[j]+"</a> ("+bandnr+")";
-								tempWerk.push(werkzusatz2);
-							}
-							werkeSort.push(tempWerk);
-						});
-						objectContainsArray["object"] = werkzusatz;
-
-						werkeSort.sort(function(a,b){
-							return a[0]-b[0];
-						});
-
-						var werkeSorted = "";
-						$.each(werkeSort, function(x){
-							if(werkeSorted == ""){
-								werkeSorted = werkeSort[x][1];
-							} else {
-								werkeSorted = werkeSorted +"<br>"+ werkeSort[x][1];
-							}
-						});
-						console.log(werkeSorted);
-						objectContainsArray["object"] = werkeSorted;
+	//Filter out Solr specific fields
+	for (entry in results[id]) {
+		if ((entry.indexOf(":") > -1 || entry === "id") && entry.indexOf("_") === -1 && entry !== "rdf:type") {
+			resultArr.push([entry, results[id][entry]]);
+			if (results[id][entry] instanceof Array) {
+				$.each(results[id][entry], function (index,value) {
+					if (value.indexOf("http://") > -1) {
+						files.push([entry,value]);
 					}
-				}
-
-				if(predicate=="http://vocab.lodum.de/istg/historicPlace" && (object.indexOf("http://") != -1)){
-			  	(json[i].histPlaceName !=undefined) ?	object=json[i].histPlaceName[0] : object="unknown";
-				}else if(predicate=="http://purl.org/dc/terms/isPartOf"){
-					var seriesNumber = [];
-					if(json[i].seriesNumber){
-						var splittedSeriesNumber = json[i].seriesNumber[0].split("|");
-						$.each(splittedSeriesNumber, function(k){
-							if(splittedSeriesNumber[k] != ""){
-								seriesNumber.push(splittedSeriesNumber[k].split("<>"));
-							}
-						});
-					}
-					if(object.indexOf("http://") != -1){
-						if(json[i].partOf!=undefined){
-							console.log("===partOf2===");
-							console.log(json[i].partOf2);
-							if(object.indexOf(";") != -1){
-								var splitObject = object.split(";");
-								var newObject = "";
-								$.each(splitObject, function(j){
-									var number = ""
-									if(newObject == ""){
-										if(json[i].partOfDesc!=undefined){
-											if(splitObject[j].indexOf("http://") != -1){
-												for(l=0;l<seriesNumber.length;l++){
-													if(json[i].partOfDesc[j].indexOf(seriesNumber[l][0])!=-1){
-														number ="("+ seriesNumber[l][1]+")";
-													}
-												}
-												newObject="<a href=\"javascript:showPartOfDetails('"+splitObject[j]+"');\">"+json[i].partOfDesc[j]+"</a> "+number;
-											}else{
-												for(l=0;l<seriesNumber.length;l++){
-                          if(splitObject[j].indexOf(seriesNumber[l][0])!=-1){
-                            number = "("+seriesNumber[l][1]+")";
-                          }
-                        }
-												newObject=splitObject[j]+" "+number;
-											}
-										}
-									}else{
-										if(splitObject[j].indexOf("http://") != -1){
-											for(l=0;l<seriesNumber.length;l++){
-                        if(json[i].partOfDesc[j].indexOf(seriesNumber[l][0])!=-1){
-                          number = "("+seriesNumber[l][1]+")";
-                        }
-                      }
-											newObject=newObject +"<br>"+ "<a href=\"javascript:showPartOfDetails('"+splitObject[j]+"');\">"+json[i].partOfDesc[j]+"</a> "+number;
-										}else{
-											for(l=0;l<seriesNumber.length;l++){
-                      	if(splitObject[j].indexOf(seriesNumber[l][0])!=-1){
-                          number = "("+seriesNumber[l][1]+")";
-                        }
-                      }
-											newObject=newObject +"<br>"+ splitObject[j]+" "+number;
-										}
-									}
-								});
-
-								object = newObject;
-								console.log("newObject");
-								console.log(object);
-							}else{
-								(json[i].partOfDesc!=undefined) ?  object="<a href=\"javascript:showPartOfDetails('"+json[i].partOf[0]+"');\">"+json[i].partOfDesc.join(";")+"</a>" : object="unknown";
-								console.log("Object PartOf if only one entry");
-								console.log(object);
-							}
-						}else{
-							(json[i].partOfDesc!=undefined)  ?  object=json[i].patOfDesc.join(";") : object="unknown";
-							console.log("ELSE");
-						}
-					} else{
-						if(object.indexOf(";") != -1){
-							var splitObject = object.split(";");
-							var newObject = "";
-							$.each(splitObject,function(j){
-								var number = "";
-								if(newObject == ""){
-									for(l=0;l<seriesNumber.length;l++){
-                		if(splitObject[j].indexOf(seriesNumber[l][0])!=-1){
-                  		number = "("+seriesNumber[l][1]+")";
-                		}
-              		}
-									newObject=splitObject[j]+" "+number;
-								}else{
-									for(l=0;l<seriesNumber.length;l++){
-                		if(splitObject[j].indexOf(seriesNumber[l][0])!=-1){
-                  		number = "("+seriesNumber[l][1]+")";
-                		}
-              		}
-									newObject=newObject +"<br>"+ splitObject[j]+" "+number;
-								}
-							});
-							object = newObject;
-						}else{
-							var number = "";
-							for(l=0;l<seriesNumber.length;l++){
-		            if(object.indexOf(seriesNumber[l][0])!=-1){
-		              number = "("+seriesNumber[l][1]+")";
-		            }
-		          }
-		          object=object+" "+number;
-						}
-					}
-				}else if(predicate=="http://vocab.lodum.de/istg/technic" && (object.indexOf("http://") != -1)){
-					(json[i].technicName!=undefined) ?	object=json[i].technicName.join("; ") : object="unknown";
-				}else if(predicate=="http://purl.org/dc/terms/publisher" && (object.indexOf("http://") != -1)){
-					(json[i].publisherName!=undefined) ?	object=json[i].publisherName.join("; ") : object="unkown";
-				}else if(predicate=="http://purl.org/ontology/bibo/editorlist" /* && (object.indexOf("http://") == -1)*/){
-					(json[i].editorName!=undefined) ? object=json[i].editorName.join('; ') : object="unkown";
-				}else if(predicate=="http://purl.org/dc/terms/creator" /* && (object.indexOf("http://") != -1)*/){
-					(json[i].authorName!=undefined) ? object=json[i].authorName.join('; '): object="unknown";
-				}else if(predicate=="http://purl.org/ontology/bibo/editor" /* && (object.indexOf("http://") != -1)*/){
-					(json[i].editorName!=undefined) ? object=json[i].editorName.join('; '): object="unknown";
-				}else if(predicate=="http://vocab.lodum.de/istg/category" && (object.indexOf("http://") != -1)){
-					(json[i].category!=undefined) ? object=json[i].category.join('; '): object="unknown";
-				}else if(predicate=="http://vocab.lodum.de/istg/region" && (object.indexOf("http://") != -1)){
-					(json[i].regionName!=undefined) ? object=json[i].regionName.join('; '): object="unknown";
-		    }else if(predicate=="http://vocab.lodum.de/istg/historicPlace" && (object.indexOf("http://") != -1)){
-		      (json[i].histPlaceName!=undefined) ? object=json[i].histPlaceName.join('; '): object="unknown";
-		    }else if(predicate=="http://purl.org/dc/terms/isPartOf" && (object.indexOf("http://") != -1)){
-		      (json[i].article!=undefined) ? object=json[i].article.join('; '): object="unknown";
-		    }else if(predicate=="http://vocab.lodum.de/istg/cartographer" && (object.indexOf("http://") != -1)){
-		      (json[i].cartographer!=undefined) ? object=json[i].cartographer.join('; '): object="unknown";
-		    }else if(predicate=="http://vocab.lodum.de/istg/mapType" && (object.indexOf("http://") != -1)){
-		      (json[i].mapType!=undefined) ? object=json[i].mapType.join('; '): object="unknown";
-				}else if(predicate=="http://vocab.lodum.de/istg/city" && (object.indexOf("http://") != -1)){
-					(json[i].cityName!=undefined) ? object=json[i].cityName.join('; '): object="unknown";
-				}else if(predicate=="http://vocab.lodum.de/istg/country" && (object.indexOf("http://") != -1)){
-					(json[i].countryName!=undefined) ? object=json[i].countryName.join('; '): object="unknown";
-				}else if(predicate=="http://vocab.lodum.de/istg/continent" && (object.indexOf("http://") != -1)){
-		     	(json[i].continentName!=undefined) ? object=json[i].continentName.join('; '): object="unknown";
-		   	} else if(predicate=="http://vocab.lodum.de/istg/publishingOrganization" && (object.indexOf("http://") != -1)){
-		      (json[i].organizationName!=undefined) ? object=json[i].organizationName.join('; '): object="unknown";
-		    }else if(predicate=="http://purl.org/dc/elements/1.1/creator" && (object.indexOf("http://") != -1)){
-		      (json[i].creatorName!=undefined) ? object=json[i].creatorName.join('; '): object="unknown";
-		    }else if(predicate=="http://purl.org/dc/terms/isPartOf" && (object.indexOf("http://") != -1)){
-		      (json[i].issueName!=undefined) ? object=json[i].issueName.join('; '): object="unknown";
-				}else if(predicate=="http://vocab.lodum.de/istg/type" && json[i].z[0]=="Q") {
-					object = "Quellen";
-				}else if(predicate=="http://www.w3.org/2000/01/rdf-schema#comment" && object.indexOf("\n") != -1){
-					var newObject = "";
-					var split = object.split("\n");
-					$.each(split, function(j){
-						if(newObject == ""){
-							newObject += split[j];
-						}else{
-							newObject=newObject + "<br>" + split[j];
-						}
-					});
-					object = newObject;
-		    }else if(predicate=="http://purl.org/dc/terms/contributor"){
-					var newObject = "";
-					if(json[i].contributorName != undefined){
-						$.each(json[i].contributorName, function(j){
-							if(newObject == ""){
-								newObject += json[i].contributorName[j];
-							}else{
-								newObject = newObject + "<br>" + json[i].contributorName[j];
-							}
-						});
-					} else {
-						newObject = json[i].z.join("<br>");
-					}
-					console.log(newObject);
-					object = newObject;
-				}else if(predicate=="http://vocab.lodum.de/istg/themeLocation" && (object.indexOf("http://") != -1)){
-		      (json[i].placeName!=undefined) ? object=json[i].placeName.join('; '): object="unknown";
-				}else if(predicate=="http://xmlns.com/foaf/spec/#thumbnail"){
-					object=object.split(';');
-					o="";
-					$.each(object, function(i){
-						o+="<div style=\"width:250px;height:250px;\"><img src=\""+object[i]+"\" width=\"100%\" height=\"100%\" alt=\""+object[i]+"\"></div>";
-					});
-					object=o;
-				}
-
-				//generate links for uirs
-				if((predicate!="http://xmlns.com/foaf/spec/#thumbnail" && (object.indexOf("http://") != -1)) && (predicate!="http://purl.org/dc/terms/isPartOf")  ){
-					object=replaceURLWithHTMLLinks(object);
-					object="<a href=\""+object+"\">"+object+"</a>";
-				}
-
-				(object=="true") ? object="&radic;":object=object;
-				(object=="false" || object=="0" || object=="NUll" || object=="null" || object=="") ? object="&ndash;":object=object;
-
-				if(uri.indexOf("allegro") == -1 && label != "Vorschaubild"){
-					predicatObjectArray[count]={};
-		    	predicatObjectArray[count]["label"]=label;
-		    	predicatObjectArray[count]["object"]=object;
-					predicatObjectArray[count]["sort"]=sortIndex;
-					count++;
-				} else if(uri.indexOf("allegro") != -1 && (label != "Schlagworte" && label != "Geländestrukturen" && label != "Band")){
-					predicatObjectArray[count]={};
-		    	predicatObjectArray[count]["label"]=label;
-		    	predicatObjectArray[count]["object"]=object;
-					predicatObjectArray[count]["sort"]=sortIndex;
-					count++;
-				}
-			});
-
-			//sort labels
-			predicatObjectArray.sort(function(a,b) {
-			    return a.sort - b.sort;
-			});
-
-			if(objectContainsArray["object"] != undefined){
-				predicatObjectArray.splice(2,0,objectContainsArray);
-			}
-
-			//print labels to html table
-			//properties="<table>";
-			$.each(predicatObjectArray, function(i){
-				properties+="<tr><td width=\"150px\" style=\"vertical-align:top;\">"+predicatObjectArray[i].label+"</td><td><span class=\"stringresult\">"+predicatObjectArray[i].object+"</span></td></tr>";
-			});
-			$("#ajaxloader2").remove();
-			div=$("<div id=\"properties\" style=\"min-height:320px;float:left; \">"+properties+"</div> ");
-
-			//add property table to div container
-			element.append(div).hide();
-			element.slideToggle(300);
-			if(highlight){
-				//highlight searchterms
-				keywords=$.trim($("#searchbox").val()).split(" ");
-				$.each(keywords, function(key,value){
-					    value=value.replace('"', "").replace('"', "");
-						highlightKeywords(value);
 				});
 			}
-		}//end success
-	});//end ajax request
+		}
+	}
+
+	resultArr.sort(function(a,b){
+		if (a[0] !== "id" && a[0] !== "rdf:type" && a[0] !== "istg:maintitle" && a[0] !== "istg:subtitle" && a[0] !== "istg:icon") {
+
+			sortA = $.grep(displaySort, function (e) {
+				return e.property == a[0];
+			});
+			sortB = $.grep(displaySort, function (e) {
+				return e.property == b[0]
+			});
+
+			if (a[3] === undefined && a[4] === undefined) {
+				a.push(sortA[0].label);
+				a.push(sortA[0].sort);
+			}
+			if (b[3] === undefined && b[4] === undefined) {
+				b.push(sortB[0].label);
+				b.push(sortB[0].sort);
+			}
+
+			return a[3]-b[3];
+		}
+	});
+
+	files.reduce(function(prev, cur, index) {
+    return prev.then(function(data) {
+	    query = 'id:"'+cur[1]+'"';
+			url = "http://gin-isdg.uni-muenster.de:8983/solr/collection1/select?q=" + encodeURIComponent(query) + "&wt=json&indent=true&json.wrf=?";
+			return $.ajax({
+	  		dataType: "json",
+	  		url: url
+			}).then(function(data){
+				$.each(resultArr, function (index,value) {
+					if (resultArr[index][0] === cur[0]) {
+						if (cur[0] === "dc:creator") {
+							$.each(resultArr[index][1], function (ind,value) {
+								if (value === cur[1]) {
+									resultArr[index][1][ind] = [cur[1],data.response.docs[0]["foaf:name"][0]];
+								}
+							});
+						}
+						//TODO check other URL fields
+					}
+				});
+			});
+    })
+	}, $().promise()).done(function() {
+		//everything is set up to display
+		$.each(resultArr,function (index, value) {
+			if (value[2]) {
+				if (value[1] instanceof Array) {
+					label = value[2];
+					content = "";
+					if (value[0] == "dc:creator") {
+						$.each(value[1], function (index, value) {
+							if (content !== "") {
+								content += "<br>";
+							}
+							content += value[1];
+						});
+					} else if (value[0] === "dct:isPartOf") {
+						$.each(value[1], function (index,value) {
+							if (content !== "") {
+								content += "<br>";
+							}
+							if (value.indexOf("http://") > -1) {
+
+							} else {
+								content += value;
+							}
+						});
+					} else if (value[0] === "dct:publisher") {
+						$.each(value[1], function (index,value) {
+							if (content !== "") {
+								content += "<br>";
+							}
+							if (value.indexOf("http://") > -1) {
+
+							} else {
+								content += value;
+							}
+						});
+					} else if (value[0] === "dc:subject") {
+						$.each(value[1], function (index,value) {
+							if (content !== "") {
+								content += "<br>";
+							}
+							content += value;
+						});
+					}
+				} else {
+					label = value[2];
+					content = value[1];
+					if (value[0] === "rdfs:comment") {
+						var newObject = "";
+						var split = content.split("\n");
+						$.each(split, function(j){
+							if(newObject == ""){
+								newObject += split[j];
+							}else{
+								newObject=newObject + "<br>" + split[j];
+							}
+						});
+						content = newObject;
+					} else if (value[0] === "istg:type" && content === "Q") {
+						content = "Quellen";
+					}
+				}
+				properties+="<tr><td width=\"150px\" style=\"vertical-align:top;\">"+label+"</td><td><span class=\"stringresult\">"+content+"</span></td></tr>";
+			}
+		});
+		$("#ajaxloader2").remove();
+		div=$("<div id=\"properties\" style=\"min-height:320px;float:left; \">"+properties+"</div> ");
+		element.append(div).hide();
+		element.slideToggle(300);
+	});
+	// var request = { accept : 'application/sparql-results+json' };
+	// request.query = sparqlPrefixes+"SELECT ?y ?z ?label ?sort ?werke ?werketitel ?werkebandnr ?contributorName ?seriesNumber ?publisherName ?issueName ?signature ?collection ?creatorName ?placeName ?countryName (CONCAT(?cartographerFN, ' ' ,?cartographerLN) AS ?cartographer) ?editorName ?article ?mapType ?histPlaceName ?category ?authorName ?cityName ?regionName ?cityName ?continentName ?technicName ?organizationName ?partOfDesc ?partOf ?partOf2 WHERE {"
+	// +"<"+uri+"> ?y ?z.?y <http://www.w3.org/2000/01/rdf-schema#label> ?label."
+	// +"OPTIONAL{?y <http://vocab.lodum.de/istg/displaySort> ?sort}."
+	// //+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfDesc}."
+	// //+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfDesc.?partOf dct:isPartOf ?partPartOf. ?partPartOf dct:issued ?partOfIssued.BIND(CONCAT(?partOfDesc,' (',str(?partOfIssued),')') AS ?partOfDesc)}."
+	// //+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfDesc.?partOf dct:issued ?partOfIssued.BIND(CONCAT(?partOfDesc,' (',str(?partOfIssued),')') AS ?partOfDesc)}."
+	// /*+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfTitle.?partOf istg:authorString ?partOfAuthorName. BIND(CONCAT(?partOfAuthorName,':','<i>',str(?partOfTitle),'</i>') AS ?partOfDesc)}."
+	// 	+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfTitle.?partOf istg:editorString ?partOfEditorName. BIND(CONCAT(?partOfEditorName,'(Hrsg.):','<i>',str(?partOfTitle),'</i>') AS ?partOfDesc)}."
+	// 	+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf.?partOf dct:issued ?partOfIssued. ?partOf dct:title ?partOfTitle.?partOf istg:authorString ?partOfAuthorName. BIND(CONCAT(?partOfAuthorName,'(',str(?partOfIssued),'):','<i>',str(?partOfTitle),'</i>') AS ?partOfDesc)}."
+	// 	+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf.?partOf dct:issued ?partOfIssued. ?partOf dct:title ?partOfTitle.?partOf istg:editorString ?partOfEditorName. BIND(CONCAT(?partOfEditorName,'(Hrsg.)(',str(?partOfIssued),'):','<i>',str(?partOfTitle),'</i>') AS ?partOfDesc)}."
+	// 	//einzelwerk ist teil von aufsatz und aufsatz von gesamtwerk
+	// 	+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf.?partOf dct:issued ?partOfIssued. ?partOf dct:title ?partOfTitle.?partOf istg:authorString ?partOfAuthorName. ?partOf dct:isPartOf ?partPartOf. ?partPartOf dct:title ?partPartOfTitle.?partPartOf istg:editorString ?partPartOfEditorName. BIND(CONCAT(?partOfAuthorName,'(',str(?partOfIssued),'):','<i>',str(?partOfTitle),'</i><br/> in ',?partPartOfEditorName,'(Hrsg.)::<i>',?partPartOfTitle,'</i>') AS ?partOfDesc)}."
+	// 	+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfTitle.?partOf istg:authorString ?partOfAuthorName. ?partOf dct:isPartOf ?partPartOf. ?partPartOf dct:title ?partPartOfTitle.?partPartOf istg:editorString ?partPartOfEditorName. BIND(CONCAT(?partOfAuthorName,':','<i>',str(?partOfTitle),'</i><br/> in ',?partPartOfEditorName,'(Hrsg.):<i>',?partPartOfTitle,'</i>') AS ?partOfDesc)}."
+	// 	+"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfTitle.?partOf istg:authorString ?partOfAuthorName. ?partOf dct:isPartOf ?partPartOf. ?partPartOf dct:title ?partPartOfTitle.?partPartOf istg:editorString ?partPartOfEditorName.?partPartOf dct:issued ?partPartOfIssued. BIND(CONCAT(?partOfAuthorName,':','<i>',str(?partOfTitle),'</i><br/> in ',?partPartOfEditorName,'(Hrsg.)(',str(?partPartOfIssued),'):<i>',?partPartOfTitle,'</i>') AS ?partOfDesc)}."
+	// */
+	// //+"OPTIONAL{<"+uri+"> istg:technic ?technic. ?technic foaf:name ?technicName}."
+	// //+"OPTIONAL{<"+uri+"> istg:historicalLocation ?histLoc. ?histLoc gn:name ?histLocName}."
+	// //+"OPTIONAL{<"+uri+"> bibo:editor ?publisher. ?publisher foaf:name ?editorName}."
+	// //+"OPTIONAL{<"+uri+"> istg:cartographer ?cartographer. ?cartographer <http://xmlns.com/foaf/0.1/family_name> ?cartographerName}."
+ //  //+"OPTIONAL{<"+uri+"> istg:city ?city. ?city gn:name ?cityName}."
+	// //+"OPTIONAL{<"+uri+"> istg:region ?region. ?region gn:name ?regionName}."
+	// //+"OPTIONAL{<"+uri+"> istg:state ?state. ?state gn:name ?stateName}."
+	// //+"OPTIONAL{<"+uri+"> istg:country ?country. ?country gn:name ?countryName}."
+	// //+"OPTIONAL{<"+uri+"> istg:continent ?continent. ?continent gn:name ?continentName}."
+	// //+"OPTIONAL{<"+uri+"> <http://purl.org/ontology/bibo/editorlist> ?eList.?eList <http://www.w3.org/2000/01/rdf-schema#member> ?eListMember.?eListMember <http://xmlns.com/foaf/0.1/name> ?editorName.}."
+	// //+"OPTIONAL{<"+uri+"> bibo:editor ?editor.?editor foaf:name ?editorName.}."
+	// +"OPTIONAL{<"+uri+"> dct:isPartOf ?edited. ?edited dct:isPartOf ?partOf2}."
+ //  +"OPTIONAL{<"+uri+"> dct:isPartOf ?editedBookObj. ?editedBookObj a bibo:EditedBook. ?editedBookObj istg:signature ?signature }."
+	// +"OPTIONAL{?werke dct:isPartOf <"+uri+">. ?werke dct:title ?werketitel. ?werke bibo:volume ?werkebandnr. }."
+ //  //+"OPTIONAL{<"+uri+"> dct:isPartOf ?collectionObj. ?collectionObj a bibo:Collection. ?collectionObj dct:title ?collection }."
+ //  +"OPTIONAL{<"+uri+"> istg:themeLocation ?placeObj. ?placeObj gn:name ?placeName }."
+ //  +"OPTIONAL{<"+uri+"> bibo:editor ?publisher. ?publisher foaf:name ?editorName}."
+	// +"OPTIONAL{<"+uri+"> dct:contributor ?contributor. ?contributor foaf:name ?contributorName}."
+	// +"OPTIONAL{<"+uri+"> dct:isPartOf ?issueObj. ?issueObj dct:title ?issueName }."
+	// +"OPTIONAL{<"+uri+"> dc:creator ?creatorObj. ?creatorObj foaf:name ?creatorName }."
+	// +"OPTIONAL{<"+uri+"> istg:publishingOrganization ?verlagObj. ?verlagObj a foaf:Organization. ?verlagObj foaf:name ?organizationName}."
+	// //+"OPTIONAL{<"+uri+"> dct:isPartOf ?verlagObj. ?verlagObj a foaf:Organization. ?verlagObj foaf:name ?organizationName}."
+	// +"OPTIONAL{<"+uri+"> dct:isPartOf ?partOf. ?partOf dct:title ?partOfDesc}."
+	// +"OPTIONAL{<"+uri+"> istg:continent ?continentObj. ?continentObj dbpedia-prop:commonName ?continentName}."
+	// +"OPTIONAL{<"+uri+"> istg:city ?cityObj. ?cityObj dbpedia-prop:commonName ?cityName}."
+ //  +"OPTIONAL{<"+uri+"> istg:region ?regionObj. ?regionObj rdf:description ?regionName }."
+	// +"OPTIONAL{<"+uri+"> istg:country ?countryObj. ?countryObj dbpedia-prop:commonName ?countryName }."
+	// +"OPTIONAL{<"+uri+"> istg:mapType ?mapTypeObj. ?mapTypeObj skos:prefLabel ?mapType }."
+	// +"OPTIONAL{<"+uri+"> istg:cartographer ?cartographerObj. ?cartographerObj foaf:lastName ?cartographerLN. }."
+	// +"OPTIONAL{<"+uri+"> istg:cartographer ?cartographerObj. ?cartographerObj foaf:firstName ?cartographerFN. }."
+	// //+"OPTIONAL{<"+uri+"> dct:isPartOf  ?articleObj. ?articleObj a bibo:Article. ?articleObj istg:maintitle ?article }."
+	// +"OPTIONAL{<"+uri+"> istg:historicPlace ?histPlaceObj. ?histPlaceObj istg:historicPlaceName ?histPlaceName }."
+	// +"OPTIONAL{<"+uri+"> istg:category ?categoryObj. ?categoryObj rdfs:label ?category }."
+	// +"OPTIONAL{<"+uri+"> dct:creator ?authorObj. ?authorObj foaf:name ?authorName }."
+	// +"OPTIONAL{<"+uri+"> istg:relief ?seriesNumber}."
+	// +"}"
+	// +"ORDER BY ASC(?sort)";
+
+	// console.log(request.query);
+
+	// if(xhr){ //cancel previous request
+	// 	xhr.abort();
+	// }
+	// $.ajax({
+	// 	beforeSend: function(xhrObj){
+	//     xhrObj.setRequestHeader("Accept","application/sparql-results+json");
+	//   },
+	// 	url: sparqlendpoint,
+	// 	type: "POST",
+	// 	dataType: "json",
+	// 	data: request,
+	// 	success: function(json){
+	// 		var properties='<table id=\"proptable\" align=\"left\" style=\"font-size:10px;text-align:left;\">';
+	// 		console.log("before reduce loadandappend");
+	// 		console.log(json);
+	// 		count=0;
+	// 		json=reducer(json);
+	// 		console.log("===after reducer===");
+ //      console.log(json);
+	// 		var predicatObjectArray = [];
+	// 		var objectContainsArray = [];
+	// 		//objectContains = [];
+	// 		var werkeVorhanden = false;
+	// 		$.each(json, function(i){
+	// 			predicate=i;
+	// 			label=json[i].label[0];
+	// 			//object=json[i].z[0];
+	// 			object=json[i].z.join(";");
+	// 			sortIndex=json[i].sort[0];
+	// 			var werkzusatz = ""
+	// 			if(!werkeVorhanden){
+	// 				if(json[i].werke != undefined && (json[i].werketitel != undefined)){
+	// 					werkeVorhanden = true;
+	// 					var werke = json[i].werke;
+	// 					var werkeSort = [];
+	// 					objectContainsArray["label"]="enthält";
+	// 					$.each(werke, function(j){
+	// 						var tempWerk = [];
+	// 						var bandnr = (json[i].werkebandnr[j] != undefined) ? json[i].werkebandnr[j] : json[i].werkebandnr[j-1];
+	// 						tempWerk.push(bandnr);
+	// 						console.log("bandnr: "+bandnr);
+	// 						if(json[i].werketitel[j] != undefined){
+	// 							if(werkzusatz == ""){
+	// 								werkzusatz="<a href=\"javascript:showPartOfDetails('"+werke[j]+"');\">"+json[i].werketitel[j]+"</a> ("+bandnr+")";
+	// 								tempWerk.push(werkzusatz);
+	// 							}else{
+	// 								werkzusatz=werkzusatz +"<br>"+ "<a href=\"javascript:showPartOfDetails('"+werke[j]+"');\">"+json[i].werketitel[j]+"</a> ("+bandnr+")";
+	// 								werkzusatz2="<a href=\"javascript:showPartOfDetails('"+werke[j]+"');\">"+json[i].werketitel[j]+"</a> ("+bandnr+")";
+	// 								tempWerk.push(werkzusatz2);
+	// 							}
+	// 						}else if(json[i].werketitel[j-1] != undefined){
+	// 							werkzusatz=werkzusatz +"<br>"+ "<a href=\"javascript:showPartOfDetails('"+werke[j]+"');\">"+json[i].werketitel[j-1]+"</a> ("+bandnr+")";
+	// 							werkzusatz2="<a href=\"javascript:showPartOfDetails('"+werke[j]+"');\">"+json[i].werketitel[j]+"</a> ("+bandnr+")";
+	// 							tempWerk.push(werkzusatz2);
+	// 						}
+	// 						werkeSort.push(tempWerk);
+	// 					});
+	// 					objectContainsArray["object"] = werkzusatz;
+
+	// 					werkeSort.sort(function(a,b){
+	// 						return a[0]-b[0];
+	// 					});
+
+	// 					var werkeSorted = "";
+	// 					$.each(werkeSort, function(x){
+	// 						if(werkeSorted == ""){
+	// 							werkeSorted = werkeSort[x][1];
+	// 						} else {
+	// 							werkeSorted = werkeSorted +"<br>"+ werkeSort[x][1];
+	// 						}
+	// 					});
+	// 					console.log(werkeSorted);
+	// 					objectContainsArray["object"] = werkeSorted;
+	// 				}
+	// 			}
+
+	// 			if(predicate=="http://vocab.lodum.de/istg/historicPlace" && (object.indexOf("http://") != -1)){
+	// 		  	(json[i].histPlaceName !=undefined) ?	object=json[i].histPlaceName[0] : object="unknown";
+	// 			}else if(predicate=="http://purl.org/dc/terms/isPartOf"){
+	// 				var seriesNumber = [];
+	// 				if(json[i].seriesNumber){
+	// 					var splittedSeriesNumber = json[i].seriesNumber[0].split("|");
+	// 					$.each(splittedSeriesNumber, function(k){
+	// 						if(splittedSeriesNumber[k] != ""){
+	// 							seriesNumber.push(splittedSeriesNumber[k].split("<>"));
+	// 						}
+	// 					});
+	// 				}
+	// 				if(object.indexOf("http://") != -1){
+	// 					if(json[i].partOf!=undefined){
+	// 						console.log("===partOf2===");
+	// 						console.log(json[i].partOf2);
+	// 						if(object.indexOf(";") != -1){
+	// 							var splitObject = object.split(";");
+	// 							var newObject = "";
+	// 							$.each(splitObject, function(j){
+	// 								var number = ""
+	// 								if(newObject == ""){
+	// 									if(json[i].partOfDesc!=undefined){
+	// 										if(splitObject[j].indexOf("http://") != -1){
+	// 											for(l=0;l<seriesNumber.length;l++){
+	// 												if(json[i].partOfDesc[j].indexOf(seriesNumber[l][0])!=-1){
+	// 													number ="("+ seriesNumber[l][1]+")";
+	// 												}
+	// 											}
+	// 											newObject="<a href=\"javascript:showPartOfDetails('"+splitObject[j]+"');\">"+json[i].partOfDesc[j]+"</a> "+number;
+	// 										}else{
+	// 											for(l=0;l<seriesNumber.length;l++){
+ //                          if(splitObject[j].indexOf(seriesNumber[l][0])!=-1){
+ //                            number = "("+seriesNumber[l][1]+")";
+ //                          }
+ //                        }
+	// 											newObject=splitObject[j]+" "+number;
+	// 										}
+	// 									}
+	// 								}else{
+	// 									if(splitObject[j].indexOf("http://") != -1){
+	// 										for(l=0;l<seriesNumber.length;l++){
+ //                        if(json[i].partOfDesc[j].indexOf(seriesNumber[l][0])!=-1){
+ //                          number = "("+seriesNumber[l][1]+")";
+ //                        }
+ //                      }
+	// 										newObject=newObject +"<br>"+ "<a href=\"javascript:showPartOfDetails('"+splitObject[j]+"');\">"+json[i].partOfDesc[j]+"</a> "+number;
+	// 									}else{
+	// 										for(l=0;l<seriesNumber.length;l++){
+ //                      	if(splitObject[j].indexOf(seriesNumber[l][0])!=-1){
+ //                          number = "("+seriesNumber[l][1]+")";
+ //                        }
+ //                      }
+	// 										newObject=newObject +"<br>"+ splitObject[j]+" "+number;
+	// 									}
+	// 								}
+	// 							});
+
+	// 							object = newObject;
+	// 							console.log("newObject");
+	// 							console.log(object);
+	// 						}else{
+	// 							(json[i].partOfDesc!=undefined) ?  object="<a href=\"javascript:showPartOfDetails('"+json[i].partOf[0]+"');\">"+json[i].partOfDesc.join(";")+"</a>" : object="unknown";
+	// 							console.log("Object PartOf if only one entry");
+	// 							console.log(object);
+	// 						}
+	// 					}else{
+	// 						(json[i].partOfDesc!=undefined)  ?  object=json[i].patOfDesc.join(";") : object="unknown";
+	// 						console.log("ELSE");
+	// 					}
+	// 				} else{
+	// 					if(object.indexOf(";") != -1){
+	// 						var splitObject = object.split(";");
+	// 						var newObject = "";
+	// 						$.each(splitObject,function(j){
+	// 							var number = "";
+	// 							if(newObject == ""){
+	// 								for(l=0;l<seriesNumber.length;l++){
+ //                		if(splitObject[j].indexOf(seriesNumber[l][0])!=-1){
+ //                  		number = "("+seriesNumber[l][1]+")";
+ //                		}
+ //              		}
+	// 								newObject=splitObject[j]+" "+number;
+	// 							}else{
+	// 								for(l=0;l<seriesNumber.length;l++){
+ //                		if(splitObject[j].indexOf(seriesNumber[l][0])!=-1){
+ //                  		number = "("+seriesNumber[l][1]+")";
+ //                		}
+ //              		}
+	// 								newObject=newObject +"<br>"+ splitObject[j]+" "+number;
+	// 							}
+	// 						});
+	// 						object = newObject;
+	// 					}else{
+	// 						var number = "";
+	// 						for(l=0;l<seriesNumber.length;l++){
+	// 	            if(object.indexOf(seriesNumber[l][0])!=-1){
+	// 	              number = "("+seriesNumber[l][1]+")";
+	// 	            }
+	// 	          }
+	// 	          object=object+" "+number;
+	// 					}
+	// 				}
+	// 			}else if(predicate=="http://vocab.lodum.de/istg/technic" && (object.indexOf("http://") != -1)){
+	// 				(json[i].technicName!=undefined) ?	object=json[i].technicName.join("; ") : object="unknown";
+	// 			}else if(predicate=="http://purl.org/dc/terms/publisher" && (object.indexOf("http://") != -1)){
+	// 				(json[i].publisherName!=undefined) ?	object=json[i].publisherName.join("; ") : object="unkown";
+	// 			}else if(predicate=="http://purl.org/ontology/bibo/editorlist" /* && (object.indexOf("http://") == -1)*/){
+	// 				(json[i].editorName!=undefined) ? object=json[i].editorName.join('; ') : object="unkown";
+	// 			}else if(predicate=="http://purl.org/dc/terms/creator" /* && (object.indexOf("http://") != -1)*/){
+	// 				(json[i].authorName!=undefined) ? object=json[i].authorName.join('; '): object="unknown";
+	// 			}else if(predicate=="http://purl.org/ontology/bibo/editor" /* && (object.indexOf("http://") != -1)*/){
+	// 				(json[i].editorName!=undefined) ? object=json[i].editorName.join('; '): object="unknown";
+	// 			}else if(predicate=="http://vocab.lodum.de/istg/category" && (object.indexOf("http://") != -1)){
+	// 				(json[i].category!=undefined) ? object=json[i].category.join('; '): object="unknown";
+	// 			}else if(predicate=="http://vocab.lodum.de/istg/region" && (object.indexOf("http://") != -1)){
+	// 				(json[i].regionName!=undefined) ? object=json[i].regionName.join('; '): object="unknown";
+	// 	    }else if(predicate=="http://vocab.lodum.de/istg/historicPlace" && (object.indexOf("http://") != -1)){
+	// 	      (json[i].histPlaceName!=undefined) ? object=json[i].histPlaceName.join('; '): object="unknown";
+	// 	    }else if(predicate=="http://purl.org/dc/terms/isPartOf" && (object.indexOf("http://") != -1)){
+	// 	      (json[i].article!=undefined) ? object=json[i].article.join('; '): object="unknown";
+	// 	    }else if(predicate=="http://vocab.lodum.de/istg/cartographer" && (object.indexOf("http://") != -1)){
+	// 	      (json[i].cartographer!=undefined) ? object=json[i].cartographer.join('; '): object="unknown";
+	// 	    }else if(predicate=="http://vocab.lodum.de/istg/mapType" && (object.indexOf("http://") != -1)){
+	// 	      (json[i].mapType!=undefined) ? object=json[i].mapType.join('; '): object="unknown";
+	// 			}else if(predicate=="http://vocab.lodum.de/istg/city" && (object.indexOf("http://") != -1)){
+	// 				(json[i].cityName!=undefined) ? object=json[i].cityName.join('; '): object="unknown";
+	// 			}else if(predicate=="http://vocab.lodum.de/istg/country" && (object.indexOf("http://") != -1)){
+	// 				(json[i].countryName!=undefined) ? object=json[i].countryName.join('; '): object="unknown";
+	// 			}else if(predicate=="http://vocab.lodum.de/istg/continent" && (object.indexOf("http://") != -1)){
+	// 	     	(json[i].continentName!=undefined) ? object=json[i].continentName.join('; '): object="unknown";
+	// 	   	} else if(predicate=="http://vocab.lodum.de/istg/publishingOrganization" && (object.indexOf("http://") != -1)){
+	// 	      (json[i].organizationName!=undefined) ? object=json[i].organizationName.join('; '): object="unknown";
+	// 	    }else if(predicate=="http://purl.org/dc/elements/1.1/creator" && (object.indexOf("http://") != -1)){
+	// 	      (json[i].creatorName!=undefined) ? object=json[i].creatorName.join('; '): object="unknown";
+	// 	    }else if(predicate=="http://purl.org/dc/terms/isPartOf" && (object.indexOf("http://") != -1)){
+	// 	      (json[i].issueName!=undefined) ? object=json[i].issueName.join('; '): object="unknown";
+	// 			}else if(predicate=="http://vocab.lodum.de/istg/type" && json[i].z[0]=="Q") {
+	// 				object = "Quellen";
+	// 			}else if(predicate=="http://www.w3.org/2000/01/rdf-schema#comment" && object.indexOf("\n") != -1){
+	// 				var newObject = "";
+	// 				var split = object.split("\n");
+	// 				$.each(split, function(j){
+	// 					if(newObject == ""){
+	// 						newObject += split[j];
+	// 					}else{
+	// 						newObject=newObject + "<br>" + split[j];
+	// 					}
+	// 				});
+	// 				object = newObject;
+	// 	    }else if(predicate=="http://purl.org/dc/terms/contributor"){
+	// 				var newObject = "";
+	// 				if(json[i].contributorName != undefined){
+	// 					$.each(json[i].contributorName, function(j){
+	// 						if(newObject == ""){
+	// 							newObject += json[i].contributorName[j];
+	// 						}else{
+	// 							newObject = newObject + "<br>" + json[i].contributorName[j];
+	// 						}
+	// 					});
+	// 				} else {
+	// 					newObject = json[i].z.join("<br>");
+	// 				}
+	// 				console.log(newObject);
+	// 				object = newObject;
+	// 			}else if(predicate=="http://vocab.lodum.de/istg/themeLocation" && (object.indexOf("http://") != -1)){
+	// 	      (json[i].placeName!=undefined) ? object=json[i].placeName.join('; '): object="unknown";
+	// 			}else if(predicate=="http://xmlns.com/foaf/spec/#thumbnail"){
+	// 				object=object.split(';');
+	// 				o="";
+	// 				$.each(object, function(i){
+	// 					o+="<div style=\"width:250px;height:250px;\"><img src=\""+object[i]+"\" width=\"100%\" height=\"100%\" alt=\""+object[i]+"\"></div>";
+	// 				});
+	// 				object=o;
+	// 			}
+
+	// 			//generate links for uirs
+	// 			if((predicate!="http://xmlns.com/foaf/spec/#thumbnail" && (object.indexOf("http://") != -1)) && (predicate!="http://purl.org/dc/terms/isPartOf")  ){
+	// 				object=replaceURLWithHTMLLinks(object);
+	// 				object="<a href=\""+object+"\">"+object+"</a>";
+	// 			}
+
+	// 			(object=="true") ? object="&radic;":object=object;
+	// 			(object=="false" || object=="0" || object=="NUll" || object=="null" || object=="") ? object="&ndash;":object=object;
+
+	// 			if(uri.indexOf("allegro") == -1 && label != "Vorschaubild"){
+	// 				predicatObjectArray[count]={};
+	// 	    	predicatObjectArray[count]["label"]=label;
+	// 	    	predicatObjectArray[count]["object"]=object;
+	// 				predicatObjectArray[count]["sort"]=sortIndex;
+	// 				count++;
+	// 			} else if(uri.indexOf("allegro") != -1 && (label != "Schlagworte" && label != "Geländestrukturen" && label != "Band")){
+	// 				predicatObjectArray[count]={};
+	// 	    	predicatObjectArray[count]["label"]=label;
+	// 	    	predicatObjectArray[count]["object"]=object;
+	// 				predicatObjectArray[count]["sort"]=sortIndex;
+	// 				count++;
+	// 			}
+	// 		});
+
+	// 		//sort labels
+	// 		predicatObjectArray.sort(function(a,b) {
+	// 		    return a.sort - b.sort;
+	// 		});
+
+	// 		if(objectContainsArray["object"] != undefined){
+	// 			predicatObjectArray.splice(2,0,objectContainsArray);
+	// 		}
+
+	// 		//print labels to html table
+	// 		//properties="<table>";
+	// 		$.each(predicatObjectArray, function(i){
+	// 			properties+="<tr><td width=\"150px\" style=\"vertical-align:top;\">"+predicatObjectArray[i].label+"</td><td><span class=\"stringresult\">"+predicatObjectArray[i].object+"</span></td></tr>";
+	// 		});
+	// 		$("#ajaxloader2").remove();
+	// 		div=$("<div id=\"properties\" style=\"min-height:320px;float:left; \">"+properties+"</div> ");
+
+	// 		//add property table to div container
+	// 		element.append(div).hide();
+	// 		element.slideToggle(300);
+	// 		if(highlight){
+	// 			//highlight searchterms
+	// 			keywords=$.trim($("#searchbox").val()).split(" ");
+	// 			$.each(keywords, function(key,value){
+	// 				    value=value.replace('"', "").replace('"', "");
+	// 					highlightKeywords(value);
+	// 			});
+	// 		}
+	// 	}//end success
+	// });//end ajax request
 }
 
 function showProperties(uri,resultID,highlight){
 	$("#properties").remove();
+	id = resultID;
 	propID="#properties_"+resultID;
 	resultID="#result_"+resultID;
 
 	$(resultID).append("<span id=\"ajaxloader2\"><br/><img src=\"http://data.uni-muenster.de/files/ajax-loader.gif\"><span>");
-	loadAndAppendPropertiesToElement(uri,$(propID),highlight);
+	loadAndAppendPropertiesToElement(uri,id,$(propID),highlight);
 }//end function showProperties
 
 function getIcon (types, type) {
@@ -1271,39 +1309,7 @@ function getIcon (types, type) {
 		}else if( $.inArray("http://purl.org/ontology/bibo/Excerpt", types)!=-1){
 			figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Stadtinformationen.png\" alt=\"Stadtinformation\"><figcaption>Stadt-<br />information</figcaption</figure>";
 		}
-
-		// else if($.inArray("http://xmlns.com/foaf/spec/#Person", json[i].typ)!=-1){
-		// 	werke = json[i].werke;
-		// 	if(json[i].comment && json[i].comment[0].search("Elektronische Ressource")!=-1){
-		// 		figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/CD-ROM.png\" alt=\"CD-ROM\"><figcaption>Disc</figcaption</figure>";
-		// 	}else if($.inArray("Bandaufführung",json[i].type)!=-1){
-		// 		figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Bandauffuehrung\"><figcaption>Einzel-<br />band</figcaption</figure>";
-		// 	}else if($.inArray("Q", json[i].type)!=-1) {
-		// 		figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\"><figcaption>Q</figcaption</figure>";
-		// 	}else if($.inArray("Zeitschriftenband",json[i].type)!=-1) {
-		// 		figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschriftenband.png\" alt=\"Zeitschriftenband\"><figcaption>Zeit-<br />schriften-<br />band</figcaption</figure>";
-		// 	}else if($.inArray("Zeitschrift", json[i].type)!=-1) {
-		// 		figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Zeitschrift.png\" alt=\"Zeitschrift\" ><figcaption>Zeitschrift</figcaption</figure>";
-		// 	}else if( $.inArray("http://purl.org/ontology/bibo/Book", json[i].werketyp)!=-1){
-		// 		figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Monographie.png\" alt=\"Monographie\"><figcaption>Buch</figcaption</figure>";
-  //   	}else if($.inArray("http://purl.org/ontology/bibo/Map", json[i].werketyp)!=-1){
-		// 		figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Karten.png\" alt=\"Karte\"><figcaption>Karte</figcaption</figure>";
-  //   	}else if($.inArray("http://purl.org/ontology/bibo/Periodical", json[i].werketyp)!=-1 || $.inArray("http://purl.org/ontology/bibo/MultiVolumeBook", json[i].typ)!=-1){
-		// 		figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/mehrbaendiges%20Werk.png\" alt=\"mehrbaendiges Werk\"><figcaption>mehr-<br />bändiges Werk</figcaption</figure>";
-  //     }else if( $.inArray("http://vocab.lodum.de/istg/PicturePostcard", json[i].werketyp)!=-1){
-		// 		figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Ansichtskarten_2.png\" alt=\"Ansichtskarte\"><figcaption>Ansichts-<br />karte</figcaption</figure>";
-  //   	}else if( $.inArray("http://vocab.lodum.de/istg/Atlas", json[i].werketyp)!=-1){
-  //       figure = "<figure><img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\"><figcaption></figcaption</figure>";
-  //   	}else if( $.inArray("http://vocab.lodum.de/istg/Atlas", json[i].werketyp)!=-1){
-  //       figure = "<figure><img src=\"http://data.uni-muenster.de/istg/atlas.png\" alt=\"Atlas\"><figcaption></figcaption</figure>";
-  //   	}else if( $.inArray("http://purl.org/ontology/bibo/Excerpt", json[i].typ)!=-1){
-		// 		figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Stadtinformationen.png\" alt=\"Stadtinformation\"><figcaption>Stadt-&nbspinformation</figcaption</figure>";
-		// 	}else if( $.inArray("http://purl.org/ontology/bibo/Article", json[i].typ)!=-1){
-		// 		figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Aufsatz.png\" alt=\"Aufsatz\"><figcaption>Aufsatz</figcaption</figure>";
-		// 	}
-		// }
-	}
-
+	}<
 	return figure;
 }
 
