@@ -1309,7 +1309,7 @@ function getIcon (types, type) {
 		}else if( $.inArray("http://purl.org/ontology/bibo/Excerpt", types)!=-1){
 			figure = "<figure><img style=\"width:32px;height:32px;\" src=\"http://data.uni-muenster.de/istg/images/Stadtinformationen.png\" alt=\"Stadtinformation\"><figcaption>Stadt-<br />information</figcaption</figure>";
 		}
-	}<
+	}
 	return figure;
 }
 
