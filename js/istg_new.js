@@ -29,13 +29,6 @@ $(document).ready(function () {
 		}
 	});
 
-	cat=getURLParameter('type').toLowerCase();
-	if(cat!="null"){
-		(cat=="literatur")?$('#expertensuche :radio')[2].click():"";
-		(cat=="karten")?$('#expertensuche :radio')[0].click():"";
-		(cat=="stadtinformationen")?$('#expertensuche :radio')[3].click():"";
-		(cat=="ansichtskarten")?$('#expertensuche :radio')[1].click():"";
-	}
 	query=getURLParameter('query');
 	if(query!="null" && query.length>2){
 		$('#searchbox').val(query);
@@ -91,14 +84,6 @@ String.prototype.endsWith = function(str)
 function replaceURLWithHTMLLinks(text) {
   var exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
   return text.replace(exp,"<a href='$1'>$1</a>");
-}
-
-function countProperties(obj) {
-  var count = 0;
-  for(var prop in obj) {
-    if(obj.hasOwnProperty(prop)) ++count;
-  }
-  return count;
 }
 
 var reducer = function( result ) {
@@ -433,8 +418,8 @@ function search($sort,$offset,$fireCount){
 
 				//only show pagination if totalresults is bigger than 100
 				if (totalResults > 100) {
-					(back) ? backHTML="<a disabled="+'"<%= bit>"'+" href=\"javascript:search("+sort+",0,false)\"><<&nbsp;</a><a disabled="+'"<%= bit>"'+" href=\"javascript:search("+sort+","+(start-100)+",false)\">< vorherige Ergebnisse</a> |"+(start+1)+"-"+(start+next)+"| " : backHTML="|1-"+rows+"|";
-					forwardHTML = (next == 100 ? "<a href=\"javascript:search("+sort+","+(start+100)+",false)\">weitere Ergebnisse ></a><a href=\"javascript:search("+sort+","+skip+",false)\"> >></a>" : "");
+					(back) ? backHTML="<a disabled="+'"<%= bit>"'+" href=\"javascript:search('"+sort+"',0,false)\"><<&nbsp;</a><a disabled="+'"<%= bit>"'+" href=\"javascript:search('"+sort+"',"+(start-100)+",false)\">< vorherige Ergebnisse</a> |"+(start+1)+"-"+(start+next)+"| " : backHTML="|1-"+rows+"|";
+					forwardHTML = (next == 100 ? "<a href=\"javascript:search('"+sort+"',"+(start+100)+",false)\">weitere Ergebnisse ></a><a href=\"javascript:search('"+sort+"',"+skip+",false)\"> >></a>" : "");
 					moreresults="<span style=\"float:left;\" class=\"moresearchresults\"> "+backHTML+" "+forwardHTML+" </span>";
 					$("#searchresults").prepend(moreresults);
 				}
@@ -716,21 +701,15 @@ var popUp;
 var lastVisitedLinks = [];
 function showPartOfDetails(uri,invokedBy){
 
-	console.log("===Function parameters===");
-	console.log(uri);
-	console.log(invokedBy);
-
 	if(popUp!=undefined){
 		popUp.close()
 	}
 
 	div=$("<div id=\"popup\"></div>");
-	loadAndAppendPropertiesToElement(uri,div);
+	loadAndAppendPropertiesToElement(uri,'',div);
 
 	if(invokedBy != "back"){
-//		loadAndAppendPropertiesToElement(uri,div);
 		lastVisitedLinks.push(uri);
-//		$("#dialog").empty().append(div).appendTo("#istg_main_wrapper").dialog("open");
 	} else {
 		lastVisitedLinks.pop();
 	}
@@ -748,48 +727,100 @@ $(function() {
 	var backBtn = '<button id="backBtn" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only ui-dialog-titlebar-close hidden" role="button" aria-disabled="false" title="back" style="left: .3em;"><span class="ui-button-icon-primary ui-icon ui-icon-arrowthick-1-w"></span><span class="ui-button-text">back</span></button>';
     $( "#dialog" ).dialog({
       autoOpen: false,
-	create:  function() {
-		$(this).prev('.ui-dialog-titlebar').append(backBtn);
-	},
+			create:  function() {
+				$(this).prev('.ui-dialog-titlebar').append(backBtn);
+			},
       close: function(event, ui) {
-	$(this).empty();
-	lastVisitedLinks = [];
-	$(this).dialog('close');
+				$(this).empty();
+				lastVisitedLinks = [];
+				$(this).dialog('close');
       }
     });
-	$("#backBtn")
-		.hover(function(){
-			$(this).addClass("ui-state-hover");
-		},function(){
-			$(this).removeClass("ui-state-hover");
-		})
-		.click(function(){
-			console.log("lastvisitedlink");
-			console.log(lastVisitedLinks.length-1);
-			showPartOfDetails(lastVisitedLinks[lastVisitedLinks.length-2],"back");
-		});
-	$(".ui-dialog").appendTo("#istg_main_wrapper").zIndex(1001);
+		$("#backBtn")
+			.hover(function(){
+				$(this).addClass("ui-state-hover");
+			},function(){
+				$(this).removeClass("ui-state-hover");
+			})
+			.click(function(){
+				console.log("lastvisitedlink");
+				console.log(lastVisitedLinks.length-1);
+				showPartOfDetails(lastVisitedLinks[lastVisitedLinks.length-2],"back");
+			});
+		$(".ui-dialog").appendTo("#istg_main_wrapper").zIndex(1001);
  });
 
-function loadAndAppendPropertiesToElement(uri,id,element,highlight){
-	var properties='<table id=\"proptable\" align=\"left\" style=\"font-size:10px;text-align:left;\">';
-	var resultArr = [];
-	var files = [];
-
-	//Filter out Solr specific fields
-	for (entry in results[id]) {
+/**
+ * Filters out Solr specific and not used
+ * vocab fields
+ * @param  {Array} entries solr response
+ * @return {Array}         filtered array
+ */
+function filterSolrFields (entries) {
+	var tempArr = [];
+	for (entry in entries) {
 		if ((entry.indexOf(":") > -1 || entry === "id") && entry.indexOf("_") === -1 && entry !== "rdf:type") {
-			resultArr.push([entry, results[id][entry]]);
-			if (results[id][entry] instanceof Array) {
-				$.each(results[id][entry], function (index,value) {
-					if (value.indexOf("http://") > -1) {
-						files.push([entry,value]);
-					}
-				});
-			}
+			tempArr.push([entry, entries[entry]]);
 		}
 	}
+	return tempArr;
+}
 
+/**
+ * Gets nested URLs for an entry
+ * @param  {Array} array array to search for nested URLs
+ * @return {Array}       array containing nested URLs
+ */
+function getNestedURLs (array) {
+	var tempArr = [];
+	for(entry in array) {
+		if (array[entry][1] instanceof Array) {
+			$.each(array[entry][1], function (index, value) {
+				if (value.indexOf("http://") > -1) {
+					tempArr.push([array[entry][0],value]);
+				}
+			});
+		}
+	}
+	return tempArr;
+}
+
+/**
+ * Loads data for Popup window
+ * @param  {String} id      Resource id to load
+ * @param  {String} element DOM element
+ */
+function loadNestedData (id,element) {
+	var ids = [];
+	ids.push(id);
+
+	var resultArr = [];
+	ids.reduce(function(prev, cur, index) {
+    return prev.then(function(data) {
+      query = 'id:"'+cur+'"';
+			url = "http://gin-isdg.uni-muenster.de:8983/solr/collection1/select?q=" + encodeURIComponent(query) + "&wt=json&indent=true&json.wrf=?";
+			return $.ajax({
+				dataType: "json",
+				url: url
+			}).then(function (data) {
+				resultArr.push(data.response.docs[0]);
+			})
+  	})
+	}, $().promise()).done(function() {
+		resultArr = filterSolrFields(resultArr[0]);
+    urls = getNestedURLs(resultArr);
+		resultArr = sortResults(resultArr);
+		appendTo(urls,resultArr,element);
+	});
+}
+
+/**
+ * Sort the results accordingly to defined
+ * order in labels.js
+ * @param  {Array} resultArr array to sort
+ * @return {Array}           sorted array
+ */
+function sortResults (resultArr) {
 	resultArr.sort(function(a,b){
 		if (a[0] !== "id" && a[0] !== "rdf:type" && a[0] !== "istg:maintitle" && a[0] !== "istg:subtitle" && a[0] !== "istg:icon") {
 
@@ -797,7 +828,7 @@ function loadAndAppendPropertiesToElement(uri,id,element,highlight){
 				return e.property == a[0];
 			});
 			sortB = $.grep(displaySort, function (e) {
-				return e.property == b[0]
+				return e.property == b[0];
 			});
 
 			if (a[3] === undefined && a[4] === undefined) {
@@ -813,7 +844,18 @@ function loadAndAppendPropertiesToElement(uri,id,element,highlight){
 		}
 	});
 
-	files.reduce(function(prev, cur, index) {
+	return resultArr;
+}
+
+/**
+ * Appends data to its final DOM element
+ * @param  {Array} urls      Array with nested URLs
+ * @param  {Array} resultArr Array that holds the results
+ * @param  {String} element   DOM element
+ */
+function appendTo(urls,resultArr,element) {
+	var properties='<table id=\"proptable\" align=\"left\" style=\"font-size:10px;text-align:left;\">';
+	urls.reduce(function(prev, cur, index) {
     return prev.then(function(data) {
 	    query = 'id:"'+cur[1]+'"';
 			url = "http://gin-isdg.uni-muenster.de:8983/solr/collection1/select?q=" + encodeURIComponent(query) + "&wt=json&indent=true&json.wrf=?";
@@ -829,8 +871,25 @@ function loadAndAppendPropertiesToElement(uri,id,element,highlight){
 									resultArr[index][1][ind] = [cur[1],data.response.docs[0]["foaf:name"][0]];
 								}
 							});
+						} else if (cur[0] === "dct:isPartOf") {
+							$.each(resultArr[index][1], function (ind,value) {
+								if (value === cur[1]) {
+									resultArr[index][1][ind] = [cur[1],data.response.docs[0]["dct:title"]];
+								}
+							});
+						} else if (cur[0] === "bibo:editor") {
+							$.each(resultArr[index][1], function (ind,value) {
+								if (value === cur[1]) {
+									resultArr[index][1][ind] = [cur[1],data.response.docs[0]["foaf:name"][0]];
+								}
+							});
+						} else if (cur[0] === "dct:contributor") {
+							$.each(resultArr[index][1], function (ind,value) {
+								if (value === cur[1]) {
+									resultArr[index][1][ind] = [cur[1],data.response.docs[0]["foaf:name"][0]];
+								}
+							});
 						}
-						//TODO check other URL fields
 					}
 				});
 			});
@@ -854,8 +913,8 @@ function loadAndAppendPropertiesToElement(uri,id,element,highlight){
 							if (content !== "") {
 								content += "<br>";
 							}
-							if (value.indexOf("http://") > -1) {
-
+							if (value[0].indexOf("http://") > -1) {
+								content += "<a href=\"javascript:showPartOfDetails('"+value[0]+"');\">"+value[1]+"</a>";
 							} else {
 								content += value;
 							}
@@ -866,7 +925,7 @@ function loadAndAppendPropertiesToElement(uri,id,element,highlight){
 								content += "<br>";
 							}
 							if (value.indexOf("http://") > -1) {
-
+								content += "<a href=\"javascript:showPartOfDetails('"+value[0]+"');\">"+value[1]+"</a>";
 							} else {
 								content += value;
 							}
@@ -877,6 +936,20 @@ function loadAndAppendPropertiesToElement(uri,id,element,highlight){
 								content += "<br>";
 							}
 							content += value;
+						});
+					} else if (value[0] === "bibo:editor") {
+						$.each(value[1], function (index,value) {
+							if (content !== "") {
+								content += "<br>";
+							}
+							content += value[1];
+						});
+					} else if (value[0] === "dct:contributor") {
+						$.each(value[1], function (index,value) {
+							if (content !== "") {
+								content += "<br>";
+							}
+							content += value[1];
 						});
 					}
 				} else {
@@ -905,6 +978,25 @@ function loadAndAppendPropertiesToElement(uri,id,element,highlight){
 		element.append(div).hide();
 		element.slideToggle(300);
 	});
+}
+
+/**
+ * Handles all links in the metasearch
+ * @param  {String} uri       clicked resource URI
+ * @param  {integer} id       index in global results array
+ * @param  {String} element   final DOM element
+ * @param  {Boolean} highlight highlight searchterm (not supported yet)
+ */
+function loadAndAppendPropertiesToElement(uri,id,element,highlight){
+	if (id !== "") {
+		var resultArr = filterSolrFields(results[id]);
+		var urls = getNestedURLs(resultArr);
+		resultArr = sortResults(resultArr);
+		appendTo(urls,resultArr,element);
+	} else {
+		loadNestedData(uri,element);
+	}
+
 	// var request = { accept : 'application/sparql-results+json' };
 	// request.query = sparqlPrefixes+"SELECT ?y ?z ?label ?sort ?werke ?werketitel ?werkebandnr ?contributorName ?seriesNumber ?publisherName ?issueName ?signature ?collection ?creatorName ?placeName ?countryName (CONCAT(?cartographerFN, ' ' ,?cartographerLN) AS ?cartographer) ?editorName ?article ?mapType ?histPlaceName ?category ?authorName ?cityName ?regionName ?cityName ?continentName ?technicName ?organizationName ?partOfDesc ?partOf ?partOf2 WHERE {"
 	// +"<"+uri+"> ?y ?z.?y <http://www.w3.org/2000/01/rdf-schema#label> ?label."
@@ -1269,6 +1361,12 @@ function loadAndAppendPropertiesToElement(uri,id,element,highlight){
 	// });//end ajax request
 }
 
+/**
+ * Handles click event in the overall search results
+ * @param  {String} uri        clicked resource uri
+ * @param  {Integer} resultID  Index in the overall result array
+ * @param  {Boolean} highlight Highlight searchterm
+ */
 function showProperties(uri,resultID,highlight){
 	$("#properties").remove();
 	id = resultID;
@@ -1277,10 +1375,15 @@ function showProperties(uri,resultID,highlight){
 
 	$(resultID).append("<span id=\"ajaxloader2\"><br/><img src=\"http://data.uni-muenster.de/files/ajax-loader.gif\"><span>");
 	loadAndAppendPropertiesToElement(uri,id,$(propID),highlight);
-}//end function showProperties
+}
 
+/**
+ * Identifies the rdf:type and the corresponding icon
+ * @param  {Array} types  Array containing multiple rdf:types
+ * @param  {String} type  rdf:type as a string
+ * @return {String}       String containing DOM element
+ */
 function getIcon (types, type) {
-	//Select Icon for the type
 	figure = "<figure><img src=\"http://data.uni-muenster.de/istg/document.png\" alt=\"Unbekannter Dokumenttyp\"></figure>";
 
 	if( type !== undefined || types !== undefined){
