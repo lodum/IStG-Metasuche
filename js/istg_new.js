@@ -759,7 +759,7 @@ $(function() {
 function filterSolrFields (entries) {
 	var tempArr = [];
 	for (entry in entries) {
-		if ((entry.indexOf(":") > -1 || entry === "id") && entry.indexOf("_") === -1 && entry !== "rdf:type") {
+		if ((entry.indexOf(":") > -1 || entry === "id") && entry.indexOf("_") === -1 && entry !== "rdf:type" && entry !== "dct:modified") {
 			tempArr.push([entry, entries[entry]]);
 		}
 	}
@@ -950,6 +950,20 @@ function appendTo(urls,resultArr,element) {
 								content += "<br>";
 							}
 							content += value[1];
+						});
+					} else if (value[0] === "dct:issued") {
+						$.each(value[1], function (index,value) {
+							if (content !== "") {
+								content += " - ";
+							}
+							content += value.substring(0,4);
+						});
+					} else if (value[0] === "bibo:edition") {
+						$.each(value[1], function (index,value) {
+							if (content !== "") {
+								content += " - ";
+							}
+							content += value;
 						});
 					}
 				} else {
