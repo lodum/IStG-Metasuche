@@ -797,7 +797,7 @@ function loadNestedData (id,element) {
 	var resultArr = [];
 	ids.reduce(function(prev, cur, index) {
     return prev.then(function(data) {
-      query = 'id:"'+cur+'"';
+      query = 'id:"'+cur+'" OR dct\\:isPartOf:"'+cur+'"';
 			url = "http://gin-isdg.uni-muenster.de:8983/solr/collection1/select?q=" + encodeURIComponent(query) + "&wt=json&indent=true&json.wrf=?";
 			return $.ajax({
 				dataType: "json",
@@ -810,6 +810,7 @@ function loadNestedData (id,element) {
 		resultArr = filterSolrFields(resultArr[0]);
     urls = getNestedURLs(resultArr);
 		resultArr = sortResults(resultArr);
+		urls.push(['contains',resultArr[0][1]]);
 		appendTo(urls,resultArr,element);
 	});
 }
@@ -857,12 +858,21 @@ function appendTo(urls,resultArr,element) {
 	var properties='<table id=\"proptable\" align=\"left\" style=\"font-size:10px;text-align:left;\">';
 	urls.reduce(function(prev, cur, index) {
     return prev.then(function(data) {
-	    query = 'id:"'+cur[1]+'"';
+	    query = 'id:"'+cur[1]+'" OR dct\\:isPartOf:"'+cur[1]+'"';
 			url = "http://gin-isdg.uni-muenster.de:8983/solr/collection1/select?q=" + encodeURIComponent(query) + "&wt=json&indent=true&json.wrf=?";
 			return $.ajax({
 	  		dataType: "json",
 	  		url: url
 			}).then(function(data){
+
+				if (data.response.docs.length > 1) {
+					$.each(resultArr, function (index, value) {
+						if (resultArr[index][0] === "dct:isPartOf" && resultArr[index+1][0] !== "contains") {
+							resultArr.splice(index+1,0,['contains',[],'enthält']);
+						}
+					});
+				}
+
 				$.each(resultArr, function (index,value) {
 					if (resultArr[index][0] === cur[0]) {
 						if (cur[0] === "dc:creator") {
@@ -889,6 +899,15 @@ function appendTo(urls,resultArr,element) {
 									resultArr[index][1][ind] = [cur[1],data.response.docs[0]["foaf:name"][0]];
 								}
 							});
+						} else if (cur[0] === "contains") {
+							$.each(data.response.docs, function (ind, value) {
+								if ($.inArray(resultArr[0][1],data.response.docs[ind]["dct:isPartOf"]) > -1) {
+									id = data.response.docs[ind].id;
+									title = data.response.docs[ind]["dct:title"];
+									contain = [id,title];
+									resultArr[index][1].push(contain);
+								}
+							});
 						}
 					}
 				});
@@ -909,6 +928,17 @@ function appendTo(urls,resultArr,element) {
 							content += value[1];
 						});
 					} else if (value[0] === "dct:isPartOf") {
+						$.each(value[1], function (index,value) {
+							if (content !== "") {
+								content += "<br>";
+							}
+							if (value[0].indexOf("http://") > -1) {
+								content += "<a href=\"javascript:showPartOfDetails('"+value[0]+"');\">"+value[1]+"</a>";
+							} else {
+								content += value;
+							}
+						});
+					} else if (value[0] === "contains") {
 						$.each(value[1], function (index,value) {
 							if (content !== "") {
 								content += "<br>";
@@ -949,7 +979,7 @@ function appendTo(urls,resultArr,element) {
 							if (content !== "") {
 								content += "<br>";
 							}
-							content += value[1];
+							content += value;
 						});
 					} else if (value[0] === "dct:issued") {
 						$.each(value[1], function (index,value) {
@@ -984,7 +1014,9 @@ function appendTo(urls,resultArr,element) {
 						content = "Quellen";
 					}
 				}
-				properties+="<tr><td width=\"150px\" style=\"vertical-align:top;\">"+label+"</td><td><span class=\"stringresult\">"+content+"</span></td></tr>";
+				if (content !== "") {
+					properties+="<tr><td width=\"150px\" style=\"vertical-align:top;\">"+label+"</td><td><span class=\"stringresult\">"+content+"</span></td></tr>";
+				}
 			}
 		});
 		$("#ajaxloader2").remove();
@@ -1005,6 +1037,7 @@ function loadAndAppendPropertiesToElement(uri,id,element,highlight){
 	if (id !== "") {
 		var resultArr = filterSolrFields(results[id]);
 		var urls = getNestedURLs(resultArr);
+		urls.push(['contains',results[id].id]);
 		resultArr = sortResults(resultArr);
 		appendTo(urls,resultArr,element);
 	} else {
