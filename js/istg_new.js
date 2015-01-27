@@ -823,26 +823,30 @@ function loadNestedData (id,element) {
  */
 function sortResults (resultArr) {
 	resultArr.sort(function(a,b){
-		if (a[0] !== "id" && a[0] !== "rdf:type" && a[0] !== "istg:maintitle" && a[0] !== "istg:subtitle" && a[0] !== "istg:icon") {
 
-			sortA = $.grep(displaySort, function (e) {
-				return e.property == a[0];
-			});
-			sortB = $.grep(displaySort, function (e) {
-				return e.property == b[0];
-			});
+		sortA = $.grep(displaySort, function (e) {
+			return e.property == a[0];
+		});
+		sortB = $.grep(displaySort, function (e) {
+			return e.property == b[0];
+		});
 
-			if (a[3] === undefined && a[4] === undefined) {
-				a.push(sortA[0].label);
-				a.push(sortA[0].sort);
-			}
-			if (b[3] === undefined && b[4] === undefined) {
-				b.push(sortB[0].label);
-				b.push(sortB[0].sort);
-			}
-
-			return a[3]-b[3];
+		if (sortA.length > 0 && a[3] === undefined && a[4] === undefined) {
+			a.push(sortA[0].label);
+			a.push(sortA[0].sort);
+		} else if (sortA.length === 0) {
+			a.push(undefined);
+			a.push(-1);
 		}
+		if (sortB.length > 0 && b[3] === undefined && b[4] === undefined) {
+			b.push(sortB[0].label);
+			b.push(sortB[0].sort);
+		} else if (sortB.length === 0) {
+			b.push(undefined);
+			b.push(-1);
+		}
+
+		return a[3]-b[3];
 	});
 
 	return resultArr;
@@ -867,7 +871,7 @@ function appendTo(urls,resultArr,element) {
 
 				if (data.response.docs.length > 1) {
 					$.each(resultArr, function (index, value) {
-						if (resultArr[index][0] === "dct:isPartOf" && resultArr[index+1][0] !== "contains") {
+						if (resultArr[index][0] === "dct:isPartOf" && resultArr[index+1] !== undefined && resultArr[index+1][0] !== "contains") {
 							resultArr.splice(index+1,0,['contains',[],'enthält']);
 						}
 					});
@@ -979,7 +983,11 @@ function appendTo(urls,resultArr,element) {
 							if (content !== "") {
 								content += "<br>";
 							}
-							content += value;
+							if (value[0].indexOf("http://") > -1) {
+								content += value[1];
+							} else {
+								content += value;
+							}
 						});
 					} else if (value[0] === "dct:issued") {
 						$.each(value[1], function (index,value) {
